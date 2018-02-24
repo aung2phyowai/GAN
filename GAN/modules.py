@@ -87,6 +87,23 @@ class Conv2d_contiguous(nn.Conv2d):
 		return out.contiguous()
 
 
+class PixelShuffle1d(Module):
+	def __init__(self,scale_kernel):
+		super(PixelShuffle1d, self).__init__()
+		self.scale_kernel = scale_kernel
+
+	def forward(self, input):
+		batch_size, channels, in_height = input.size()
+		channels //= self.scale_kernel[0]
+
+		out_height = in_height * self.scale_kernel[0]
+
+		input_view = input.contiguous().view(
+			batch_size, channels, self.scale_kernel[0]in_height)
+
+		shuffle_out = input_view.permute(0, 1, 4, 2).contiguous()
+		return shuffle_out.view(batch_size, channels, out_height)
+
 class PixelShuffle2d(Module):
 	def __init__(self,scale_kernel):
 		super(PixelShuffle2d, self).__init__()
