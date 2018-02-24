@@ -6,22 +6,22 @@ from torch.nn.parameter import Parameter
 import numpy as np
 import torch.nn.functional as F
 
-class Upsample(Module):
+class Upscale2d(Module):
 	def __init__(self,channels,scale_factor):
-		self.scale_factor = scale_factor
-		self.channels = channels
 		super(Upsample, self).__init__()
-
-		self.register_buffer('_ones', torch.Tensor(self.channels,1,*self.scale_factor))
-		self._ones.data.fill_(1)
+		self.scale_factor = scale_factor
 
 	def forward(self,input):
-		if input.is_cuda:
-			self._ones = self._ones.cuda()
-		else:
-			self._ones = self._ones.cpu()
-		return F.conv_transpose2d(
-			input, self._ones, stride=self.scale_factor, groups=self.channels)
+		input_shape = input.size()
+		tmp = input.view(input_shape[0],input_shape[1],
+							input_shape[2],1,input_shape[3],1)
+		tmp = tmp.expand(input_shape[0],input_shape[1],
+							input_shape[2],self.scale_factor[0],
+							input_shape[3],self.scale_factor[1])
+		tmp = tmp.view(input_shape[0],input_shape[1],
+							input_shape[2]*self.scale_factor[0],
+							input_shape[3]*self.scale_factor[1])
+		return tmp
 
 
 class LayerNorm(Module):
