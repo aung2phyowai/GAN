@@ -4,6 +4,7 @@ from GAN.progressive.layers import Reshape
 from GAN.progressive.modules import ProgressiveGenerator,ProgressiveGeneratorBlock,
                                     ProgressiveDiscriminator,ProgressiveDiscriminatorBlock
 from GAN.GAN.modules import LayerNorm,PixelShuffle1d,PixelShuffle2d
+from GAN.GAN.train_modules import WGAN_I_Generator,WGAN_I_Discriminator
 
 input_size = 972
 
@@ -84,3 +85,20 @@ def create_gen_blocks(n_chans,z_vars):
                                 )
     blocks.append(tmp_block)
     return blocks
+
+
+class Generator(WGAN_I_Generator):
+    def __init__(n_chans,z_vars):
+        super(Generator,self)()
+        self.model = ProgressiveGenerator(create_gen_blocks(n_chans,z_vars))
+
+    def forward(self,input,alpha=1.,upsample_scale=3):
+        return self.model(input,alpha,upsample_scale)
+
+class Discriminator(WGAN_I_Discriminator):
+    def __init__(n_chans):
+        super(Discriminator,self)()
+        self.model = ProgressiveDiscriminator(n_chans)
+
+    def forward(self,input,use_std=True):
+        return self.model(input,use_std)
