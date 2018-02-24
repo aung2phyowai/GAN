@@ -14,7 +14,7 @@ class ProgressiveGenerator(nn.Module):
         alpha = self.alpha
         for i in range(0,self.cur_block+1):
             input = self.blocks[i](input,last=(i==self.cur_block))
-            if alpha<1. and i==self.cur_block-1:
+            if alpha<1. and i==self.cur_block-1 and self.training:
                 tmp = self.blocks[i].out_sequence(input)
                 fade = True
 
@@ -35,7 +35,7 @@ class ProgressiveDiscriminator(nn.Module):
         fade = False
         alpha = self.alpha
         for i in range(self.cur_block,len(self.blocks)):
-            if alpha<1. and i==self.cur_block:
+            if alpha<1. and i==self.cur_block and self.training:
                 tmp = self.blocks[i].fade_sequence(input)
                 tmp = self.blocks[i+1].in_sequence(tmp)
                 fade = True
