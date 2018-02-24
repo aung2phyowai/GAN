@@ -14,10 +14,12 @@ class GAN_Module(nn.Module):
 		self.did_init_train = False
 
 	def save_model(self,fname):
-		model_state = self.state_dict()
-		opt_state = self.optimizer.state_dict()
+		cpu_model = self.cpu()
+		model_state = cpu_model.state_dict()
+		opt_state = cpu_model.optimizer.state_dict()
 
 		torch.save((model_state,opt_state,self.did_init_train),fname)
+		self.cuda()
 
 	def load_model(self,fname):
 		model_state,opt_state,self.did_init_train = torch.load(fname)
