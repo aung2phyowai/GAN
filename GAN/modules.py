@@ -99,9 +99,9 @@ class PixelShuffle1d(Module):
 		out_height = in_height * self.scale_kernel[0]
 
 		input_view = input.contiguous().view(
-			batch_size, channels, self.scale_kernel[0]in_height)
+			batch_size, channels, self.scale_kernel[0],in_height)
 
-		shuffle_out = input_view.permute(0, 1, 4, 2).contiguous()
+		shuffle_out = input_view.permute(0, 1, 3, 2).contiguous()
 		return shuffle_out.view(batch_size, channels, out_height)
 
 class PixelShuffle2d(Module):

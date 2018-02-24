@@ -2,7 +2,8 @@ from torch import nn
 from GAN.utils import cuda_check
 
 class ProgressiveGenerator(nn.Module):
-    def __init__(self,*blocks):
+    def __init__(self,blocks):
+        super(ProgressiveGenerator,self).__init__()
         self.blocks = blocks
         self.cur_block = 0
 
@@ -25,11 +26,12 @@ class ProgressiveGenerator(nn.Module):
         return input
 
 class ProgressiveDiscriminator(nn.Module):
-    def __init__(self,*blocks):
+    def __init__(self,blocks):
+        super(ProgressiveDiscriminator,self).__init__()
         self.blocks = blocks
         self.cur_block = len(self.blocks)-1
 
-    def forward(self,input,use_std=True):
+    def forward(self,input,use_std=False):
         for i in range(self.cur_block,len(self.blocks)):
             append_std = False
             if use_std and i==len(self.blocks)-1:
@@ -40,6 +42,7 @@ class ProgressiveDiscriminator(nn.Module):
 
 class ProgressiveGeneratorBlock(nn.Module):
     def __init__(self,intermediate_sequence,out_sequence):
+        super(ProgressiveGeneratorBlock,self).__init__()
         self.intermediate_sequence = intermediate_sequence
         self.out_sequence = out_sequence
 
@@ -51,6 +54,7 @@ class ProgressiveGeneratorBlock(nn.Module):
 
 class ProgressiveDiscriminatorBlock(nn.Module):
     def __init__(self,intermediate_sequence,in_sequence):
+        super(ProgressiveDiscriminatorBlock,self).__init__()
         self.intermediate_sequence = intermediate_sequence
         self.in_sequence = in_sequence
 
