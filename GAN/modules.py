@@ -7,8 +7,8 @@ import numpy as np
 import torch.nn.functional as F
 
 class Upscale2d(Module):
-	def __init__(self,channels,scale_factor):
-		super(Upsample, self).__init__()
+	def __init__(self,scale_factor):
+		super(Upscale2d, self).__init__()
 		self.scale_factor = scale_factor
 
 	def forward(self,input):
@@ -18,7 +18,7 @@ class Upscale2d(Module):
 		tmp = tmp.expand(input_shape[0],input_shape[1],
 							input_shape[2],self.scale_factor[0],
 							input_shape[3],self.scale_factor[1])
-		tmp = tmp.view(input_shape[0],input_shape[1],
+		tmp = tmp.contiguous().view(input_shape[0],input_shape[1],
 							input_shape[2]*self.scale_factor[0],
 							input_shape[3]*self.scale_factor[1])
 		return tmp

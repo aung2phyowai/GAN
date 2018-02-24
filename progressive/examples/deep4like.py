@@ -3,7 +3,7 @@ from torch import nn
 from GAN.progressive.layers import Reshape
 from GAN.progressive.modules import ProgressiveGenerator,ProgressiveGeneratorBlock,\
                                     ProgressiveDiscriminator,ProgressiveDiscriminatorBlock
-from GAN.GAN.modules import LayerNorm,PixelShuffle1d,PixelShuffle2d
+from GAN.GAN.modules import LayerNorm,PixelShuffle1d,PixelShuffle2d,Upscale2d
 from GAN.GAN.train_modules import WGAN_I_Generator,WGAN_I_Discriminator
 
 input_size = 972
@@ -22,20 +22,25 @@ def create_disc_blocks(n_chans,use_std):
                                 Reshape([[0],[1],[2]]),
                                 LayerNorm(out_filters,3),
                                 nn.LeakyReLU(0.2))
+    def create_fade_sequence(factor):
+        return nn.AvgPool2d((factor,1),stride=(factor,1))
     blocks = []
     tmp_block = ProgressiveDiscriminatorBlock(
                               create_conv_sequence(25,25),
-                              create_in_sequence(n_chans,25)
+                              create_in_sequence(n_chans,25),
+                              create_fade_sequence(3)
                               )
     blocks.append(tmp_block)
     tmp_block = ProgressiveDiscriminatorBlock(
                               create_conv_sequence(25,50),
-                              create_in_sequence(n_chans,25)
+                              create_in_sequence(n_chans,25),
+                              create_fade_sequence(3)
                               )
     blocks.append(tmp_block)
     tmp_block = ProgressiveDiscriminatorBlock(
                               create_conv_sequence(50,100),
-                              create_in_sequence(n_chans,50)
+                              create_in_sequence(n_chans,50),
+                              create_fade_sequence(3)
                               )
     blocks.append(tmp_block)
     in_filt = 100
@@ -45,7 +50,9 @@ def create_disc_blocks(n_chans,use_std):
                               nn.Sequential(create_conv_sequence(in_filt,200),
                                             Reshape([[0],-1]),
                                             nn.Linear(200*12,1)),
-                              create_in_sequence(n_chans,100))
+                              create_in_sequence(n_chans,100),
+                              None
+                              )
     blocks.append(tmp_block)
     return blocks
 
@@ -62,6 +69,8 @@ def create_gen_blocks(n_chans,z_vars):
                                 Reshape([[0],[1],[2],-1]),
                                 PixelShuffle2d([1,n_chans]),
                                 nn.Tanh())
+    def create_fade_sequence(factor):
+        return Upscale2d((factor,1))
     blocks = []
     tmp_block = ProgressiveGeneratorBlock(
                                 nn.Sequential(nn.Linear(z_vars,200*12),
@@ -69,22 +78,26 @@ def create_gen_blocks(n_chans,z_vars):
                                                 nn.ReLU(),
                                                 Reshape([[0],200,-1]),
                                                 create_conv_sequence(200,100)),
-                                create_out_sequence(n_chans,100)
+                                create_out_sequence(n_chans,100),
+                                create_fade_sequence(3)
                                 )
     blocks.append(tmp_block)
     tmp_block = ProgressiveGeneratorBlock(
                                 create_conv_sequence(100,50),
-                                create_out_sequence(n_chans,50)
+                                create_out_sequence(n_chans,50),
+                                create_fade_sequence(3)
                                 )
     blocks.append(tmp_block)
     tmp_block = ProgressiveGeneratorBlock(
                                 create_conv_sequence(50,25),
-                                create_out_sequence(n_chans,25)
+                                create_out_sequence(n_chans,25),
+                                create_fade_sequence(3)
                                 )
     blocks.append(tmp_block)
     tmp_block = ProgressiveGeneratorBlock(
                                 create_conv_sequence(25,25),
-                                create_out_sequence(n_chans,25)
+                                create_out_sequence(n_chans,25),
+                                None
                                 )
     blocks.append(tmp_block)
     return blocks
@@ -95,14 +108,14 @@ class Generator(WGAN_I_Generator):
         super(Generator,self).__init__()
         self.model = ProgressiveGenerator(create_gen_blocks(n_chans,z_vars))
 
-    def forward(self,input,alpha=1.,upsample_scale=3):
-        return self.model(input,alpha,upsample_scale)
+    def forward(self,input):
+        return self.model(input)
 
 class Discriminator(WGAN_I_Discriminator):
     def __init__(self,n_chans,use_std=False):
         super(Discriminator,self).__init__()
-        self.use_std = use_std
-        self.model = ProgressiveDiscriminator(create_disc_blocks(n_chans,use_std))
+        self.model = ProgressiveDiscriminator(create_disc_blocks(n_chans,use_std),
+                                                use_std=use_std)
 
     def forward(self,input):
-        return self.model(input,use_std=self.use_std)
+        return self.model(input)

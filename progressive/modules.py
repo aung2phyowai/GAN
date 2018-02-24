@@ -7,45 +7,60 @@ class ProgressiveGenerator(nn.Module):
         super(ProgressiveGenerator,self).__init__()
         self.blocks = nn.ModuleList(blocks)
         self.cur_block = 0
+        self.alpha = 1.
 
-    def forward(self,input,alpha=1.,upsample_scale=3):
-        tmp = 0
-        upsample = False
+    def forward(self,input):
+        fade = False
+        alpha = self.alpha
         for i in range(0,self.cur_block+1):
             input = self.blocks[i](input,last=(i==self.cur_block))
             if alpha<1. and i==self.cur_block-1:
                 tmp = self.blocks[i].out_sequence(input)
-                upsample = True
+                fade = True
 
-        if upsample:
-            tmp = tmp.view(tmp.size(0),tmp.size(1),tmp.size(2),1,tmp.size(3))
-            tmp = tmp.expand(tmp.size(0),tmp.size(1),
-                                tmp.size(2),upsample_scale,tmp.size(3))
-            tmp = tmp.view(tmp.size(0),tmp.size(1),
-                                tmp.size(2)*upsample_scale,tmp.size(3))
+        if fade:
+            tmp = self.blocks[i-1].fade_sequence(tmp)
             input = alpha*input+(1.-alpha)*tmp
         return input
 
 class ProgressiveDiscriminator(nn.Module):
-    def __init__(self,blocks):
+    def __init__(self,blocks,use_std=False):
         super(ProgressiveDiscriminator,self).__init__()
         self.blocks = nn.ModuleList(blocks)
+        self.use_std = use_std
         self.cur_block = len(self.blocks)-1
+        self.alpha = 1.
 
-    def forward(self,input,use_std=False):
+    def forward(self,input):
+        fade = False
+        alpha = self.alpha
         for i in range(self.cur_block,len(self.blocks)):
+            if alpha<1. and i==self.cur_block:
+                tmp = self.blocks[i].fade_sequence(input)
+                tmp = self.blocks[i+1].in_sequence(tmp)
+                fade = True
+
+            if fade and i==self.cur_block+1:
+                input = alpha*input+(1.-alpha)*tmp
+
             append_std = False
-            if use_std and i==len(self.blocks)-1:
+            if self.use_std and i==len(self.blocks)-1:
                 append_std = True
             input = self.blocks[i](input,
                                 first=(i==self.cur_block),append_std=append_std)
         return input
 
+    def downscale_to_block(self,input,i_block):
+        for i in range(i_block):
+            input = self.blocks[i].fade_sequence(input)
+        return input
+
 class ProgressiveGeneratorBlock(nn.Module):
-    def __init__(self,intermediate_sequence,out_sequence):
+    def __init__(self,intermediate_sequence,out_sequence,fade_sequence):
         super(ProgressiveGeneratorBlock,self).__init__()
         self.intermediate_sequence = intermediate_sequence
         self.out_sequence = out_sequence
+        self.fade_sequence = fade_sequence
 
     def forward(self,input,last=False):
         out = self.intermediate_sequence(input)
@@ -54,10 +69,11 @@ class ProgressiveGeneratorBlock(nn.Module):
         return out
 
 class ProgressiveDiscriminatorBlock(nn.Module):
-    def __init__(self,intermediate_sequence,in_sequence):
+    def __init__(self,intermediate_sequence,in_sequence,fade_sequence):
         super(ProgressiveDiscriminatorBlock,self).__init__()
         self.intermediate_sequence = intermediate_sequence
         self.in_sequence = in_sequence
+        self.fade_sequence = fade_sequence
 
     def forward(self,input,first=False,append_std=False):
         if first:
