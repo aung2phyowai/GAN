@@ -6,17 +6,21 @@ class ProgressiveGenerator(nn.Module):
         self.blocks = blocks
         self.cur_block = 0
 
-    def forward(self,input,alpha=1.):
+    def forward(self,input,alpha=1.,upsample_scale=3):
         tmp = 0
         upsample = False
         for i in range(0,self.cur_block+1):
             input = self.blocks[i](input,last=(i==self.cur_block))
             if alpha<1. and i==self.cur_block-1:
-                tmp = input
+                tmp = self.blocks[i].out_sequence(input)
                 upsample = True
 
         if upsample:
-            tmp = nn.functional.upsample(tmp,input.size())
+            tmp = tmp.view(tmp.size(0),tmp.size(1),tmp.size(2),1,tmp.size(3))
+            tmp = tmp.expand(tmp.size(0),tmp.size(1),
+                                tmp.size(2),upsample_scale,tmp.size(3))
+            tmp = tmp.view(tmp.size(0),tmp.size(1),
+                                tmp.size(2)*upsample_scale,tmp.size(3))
             input = alpha*input+(1.-alpha)*tmp
         return input
 
