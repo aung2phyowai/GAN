@@ -412,7 +412,9 @@ class WGAN_I_Discriminator(GAN_Module):
 		for p in self.parameters():
 			p.requires_grad = True
 
-		one = torch.FloatTensor([1]).cuda()
+		one = torch.FloatTensor([1])
+		if cuda:
+			one = one.cuda()
 		mone = one * -1
 
 		#D_real = netD(real_data_v)
@@ -440,9 +442,9 @@ class WGAN_I_Discriminator(GAN_Module):
 		# 					  grad_outputs=grad_ones,
 		# 					  create_graph=True, retain_graph=True, only_inputs=True)[0]
 		# gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * lambd
-		loss_penalty = self.calc_gradient_penalty(batch_real, batch_fake,lambd)
+		loss_penalty = self.calc_gradient_penalty(batch_real, batch_fake,lambd,cuda)
 		loss_penalty.backward()
-		
+
 		#loss = loss_fake + loss_real + loss_penalty
 
 		# Backprop gradient
@@ -456,20 +458,26 @@ class WGAN_I_Discriminator(GAN_Module):
 		return (loss_f,loss_r,penalty) # return loss
 
 
-	def calc_gradient_penalty(self, real_data, fake_data,lambd):
+	def calc_gradient_penalty(self, real_data, fake_data,lambd,cuda=True):
 		alpha = torch.rand(real_data.data.size(0),*((len(real_data.data.size())-1)*[1]))
 		alpha = alpha.expand(real_data.data.size())
-		alpha = alpha.cuda()
+		if cuda:
+			alpha = alpha.cuda()
 
 		interpolates = alpha * real_data.data + ((1 - alpha) * fake_data.data)
 
-		interpolates = interpolates.cuda()
+		if cuda:
+			interpolates = interpolates.cuda()
 		interpolates = Variable(interpolates, requires_grad=True)
 
 		disc_interpolates = self(interpolates)
 
+		ones = torch.ones(disc_interpolates.size())
+		if cuda:
+			ones = ones.cuda()
+
 		gradients = autograd.grad(outputs=disc_interpolates, inputs=interpolates,
-								  grad_outputs=torch.ones(disc_interpolates.size()).cuda() ,
+								  grad_outputs=ones,
 								  create_graph=True, retain_graph=True, only_inputs=True)[0]
 
 		gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * lambd
@@ -497,7 +505,9 @@ class WGAN_I_Generator(GAN_Module):
 			p.requires_grad = False  # to avoid computation
 
 		noise = batch_noise
-		mone = torch.FloatTensor([1]).cuda() * -1
+		mone = torch.FloatTensor([1]) * -1
+		if cuda:
+			mone = mone.cuda()
 
 		#one = torch.FloatTensor([1]).cuda()
 		#mone = one * -1
@@ -594,7 +604,7 @@ class ACWGAN_I_Discriminator(WGAN_I_Discriminator):
 		return (loss_f,loss_r,penalty,loss_c) # return loss
 
 class ACWGAN_I_Generator(WGAN_I_Generator):
-	
+
 	def train_init(self,alpha=1e-4,betas=(0.5,0.9),weight_decay=5e-5):
 		self.loss = nn.CrossEntropyLoss()
 		self.optimizer = optim.Adam(self.parameters(),lr=alpha,betas=betas,weight_decay=weight_decay)
@@ -633,4 +643,3 @@ class ACWGAN_I_Generator(WGAN_I_Generator):
 		#discriminator.optimizer.zero_grad()
 
 		return loss.data[0],loss_c # return loss
-

@@ -8,7 +8,7 @@ from GAN.GAN.train_modules import WGAN_I_Generator,WGAN_I_Discriminator
 
 input_size = 972
 
-def create_disc_blocks(n_chans):
+def create_disc_blocks(n_chans,use_std):
     def create_conv_sequence(in_filters,out_filters):
         return nn.Sequential(nn.Conv1d(in_filters,out_filters,9,padding=4),
                                 LayerNorm(out_filters,3),
@@ -38,8 +38,11 @@ def create_disc_blocks(n_chans):
                               create_in_sequence(n_chans,50)
                               )
     blocks.append(tmp_block)
+    in_filt = 100
+    if use_std:
+        in_filt += 1
     tmp_block = ProgressiveDiscriminatorBlock(
-                              nn.Sequential(create_conv_sequence(100,200),
+                              nn.Sequential(create_conv_sequence(in_filt,200),
                                             Reshape([[0],-1]),
                                             nn.Linear(200*12,1)),
                               create_in_sequence(n_chans,100))
@@ -96,9 +99,10 @@ class Generator(WGAN_I_Generator):
         return self.model(input,alpha,upsample_scale)
 
 class Discriminator(WGAN_I_Discriminator):
-    def __init__(self,n_chans):
+    def __init__(self,n_chans,use_std=False):
         super(Discriminator,self).__init__()
-        self.model = ProgressiveDiscriminator(create_disc_blocks(n_chans))
+        self.use_std = use_std
+        self.model = ProgressiveDiscriminator(create_disc_blocks(n_chans,use_std))
 
-    def forward(self,input,use_std=False):
-        return self.model(input,use_std=use_std)
+    def forward(self,input):
+        return self.model(input,use_std=self.use_std)
