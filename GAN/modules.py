@@ -37,9 +37,9 @@ class LayerNorm(Module):
 		self.eps = eps
 		if self.affine:
 			self.weight = Parameter(torch.Tensor(1,num_features,*tmp_ones))
-			self.weight.data.fill_(1)
+			self.weight.data.fill_(1.)
 			self.bias = Parameter(torch.Tensor(1,num_features,*tmp_ones))
-			self.weight.data.fill_(0)
+			self.bias.data.fill_(0.)
 		else:
 			self.register_parameter('weight', None)
 			self.register_parameter('bias', None)
@@ -94,7 +94,7 @@ class PixelShuffle1d(Module):
 
 	def forward(self, input):
 		batch_size, channels, in_height = input.size()
-		channels //= self.scale_kernel[0]
+		channels /= self.scale_kernel[0]
 
 		out_height = in_height * self.scale_kernel[0]
 
@@ -111,7 +111,7 @@ class PixelShuffle2d(Module):
 
 	def forward(self, input):
 		batch_size, channels, in_height, in_width = input.size()
-		channels //= self.scale_kernel[0]*self.scale_kernel[1]
+		channels /= self.scale_kernel[0]*self.scale_kernel[1]
 
 		out_height = in_height * self.scale_kernel[0]
 		out_width = in_width * self.scale_kernel[1]

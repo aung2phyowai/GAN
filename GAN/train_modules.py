@@ -405,7 +405,8 @@ class WGAN_I_Discriminator(GAN_Module):
 		self.optimizer = optim.Adam(self.parameters(),lr=alpha,betas=betas)
 		self.did_init_train = True
 
-	def train_batch(self, batch_real, batch_fake, lambd=10, cuda=True):
+	def train_batch(self, batch_real, batch_fake,
+						lambd=10, eps_drift=0., cuda=True):
 		if not self.did_init_train:
 			self.train_init()
 
@@ -425,8 +426,14 @@ class WGAN_I_Discriminator(GAN_Module):
 
 		fx_real = self(batch_real)
 		loss_real = fx_real.mean()
-		loss_real.backward(mone)
+		loss_real.backward(mone,retain_graph=(eps_drift>0.))
 		loss_r = loss_real.data[0]
+
+		loss_dr = 0.
+		if eps_drift>0.:
+			loss_drift = torch.pow(fx_real,2).mean()*eps_drift
+			loss_drift.backward()
+			loss_dr = loss_drift.data[0]
 
 
 		#D_fake = netD(inputv)
@@ -457,7 +464,7 @@ class WGAN_I_Discriminator(GAN_Module):
 		# Update parameters
 		self.optimizer.step()
 
-		return (loss_f,loss_r,penalty) # return loss
+		return (loss_f,loss_r,penalty,loss_dr) # return loss
 
 
 	def calc_gradient_penalty(self, real_data, fake_data,lambd,cuda=True):
