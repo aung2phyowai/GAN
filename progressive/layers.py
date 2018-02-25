@@ -13,3 +13,9 @@ class Reshape(nn.Module):
                 assert len(shape[i])==1
                 shape[i] = input.size(shape[i][0])
         return input.view(shape)
+
+class PixelNorm(nn.Module):
+    def forward(input,eps=0.0000001):
+        tmp = torch.sqrt(input.pow(2).mean(dim=1,keepdim=True)+eps)
+        input /= tmp
+        return input
