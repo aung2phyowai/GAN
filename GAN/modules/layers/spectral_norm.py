@@ -52,8 +52,6 @@ def spectral_norm(module, name='weight', dim=0):
     SpectralNorm.apply(module, name)
     return module
 
-
-
 def remove_spectral_norm(module, name='weight'):
     for k, hook in module._forward_pre_hooks.items():
         if isinstance(hook, SpectralNorm) and hook.name == name:
