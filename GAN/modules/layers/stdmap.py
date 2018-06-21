@@ -12,7 +12,8 @@ class StdMap1d(nn.Module):
     ----------
     group_size : int, optional
         How many inputs are grouped together
-        More inputs result in better estimation, less in more variance (default: 4)
+        More inputs result in better estimation, less in more variance
+        Setting it to -1 takes all inputs (default: -1)
 
     References
     ----------
@@ -20,12 +21,14 @@ class StdMap1d(nn.Module):
     Progressive Growing of GANs for Improved Quality, Stability,
     and Variation. Retrieved from http://arxiv.org/abs/1710.10196
     """
-    def __init__(self,group_size=4):
+    def __init__(self,group_size=-1):
         super(StdMap1d,self).__init__()
         self.group_size = group_size
 
     def forward(self,input):
         group_size = int(np.minimum(self.group_size,int(input.size(0))))
+        if self.group_size<1:
+            group_size = int(input.size(0))
         safe_idx = int(input.size(0)/group_size)*group_size
         input = input[:safe_idx]
         std = input.contiguous().view(group_size,-1,
@@ -45,19 +48,23 @@ class StdMap2d(nn.Module):
     ----------
     group_size : int, optional
         How many inputs are grouped together
-        More inputs result in better estimation, less in more variance (default: 4)
+        More inputs result in better estimation, less in more variance
+        Setting it to -1 takes all inputs (default: -1)
 
     References
     ----------
     Karras, T., Aila, T., Laine, S., & Lehtinen, J. (2017).
     Progressive Growing of GANs for Improved Quality, Stability,
     and Variation. Retrieved from http://arxiv.org/abs/1710.10196
-    def __init__(self,group_size=4):
+    """
+    def __init__(self,group_size=-1):
         super(StdMap2d,self).__init__()
         self.group_size = group_size
 
     def forward(self,input):
         group_size = int(np.minimum(self.group_size,int(input.size(0))))
+        if self.group_size<1:
+            group_size = int(input.size(0))
         safe_idx = int(input.size(0)/group_size)*group_size
         input = input[:safe_idx]
         std = input.contiguous().view(group_size,-1,
