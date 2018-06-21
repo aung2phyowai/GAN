@@ -30,3 +30,14 @@ def cuda_check(module_list):
 def change_learning_rate(optimizer,lr):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
+
+
+def weight_filler(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1 or classname.find('Linear') != -1:
+        m.weight.data.normal_(0.0, 1.)
+        if m.bias is not None:
+            m.bias.data.fill_(0.)
+    elif classname.find('BatchNorm') != -1 or classname.find('LayerNorm') != -1:
+        m.weight.data.normal_(1.0, 0.02)
+        m.bias.data.fill_(0.)
