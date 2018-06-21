@@ -76,7 +76,7 @@ if not os.path.exists(modelpath):
 generator = Generator(1,n_z)
 discriminator = Discriminator(1)
 
-generator.train_init(alpha=lr,betas=(0.,0.99))
+generator.train_init(alpha=lr,betas=(0.,0.99),eps_center=0.001,one_sided_penalty=True,distance_weighting=True)
 discriminator.train_init(alpha=lr,betas=(0.,0.99))
 generator = generator.apply(weight_filler)
 discriminator = discriminator.apply(weight_filler)
@@ -130,11 +130,11 @@ for i_block in range(i_block_tmp,n_blocks):
                 z_vars = Variable(torch.from_numpy(z_vars),volatile=True).cuda()
                 batch_fake = Variable(generator(z_vars).data,requires_grad=True).cuda()
 
-                loss_d = discriminator.train_batch(batch_real,batch_fake,cuda=True,eps_drift=0.001,consistency_term=True)
+                loss_d = discriminator.train_batch(batch_real,batch_fake)
                 assert np.all(np.isfinite(loss_d))
             z_vars = rng.normal(0,1,size=(n_batch,n_z)).astype(np.float32)
             z_vars = Variable(torch.from_numpy(z_vars),requires_grad=True).cuda()
-            loss_g = generator.train_batch(z_vars,discriminator,cuda=True)
+            loss_g = generator.train_batch(z_vars,discriminator)
 
         losses_d.append(loss_d)
         losses_g.append(loss_g)
