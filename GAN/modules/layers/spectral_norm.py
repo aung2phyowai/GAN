@@ -1,13 +1,19 @@
-"""
-Spectral Normalization from https://openreview.net/forum?id=B1QRgziT-
-Implemented for PyTorch using WeightNorm implementation https://pytorch.org/docs/stable/_modules/torch/nn/utils/weight_norm.html
-"""
 from torch.nn.parameter import Parameter
 from torch.autograd import Variable
 import torch
 import numpy as np
 
 class SpectralNorm(object):
+    """
+    Implemented for PyTorch using WeightNorm implementation
+    https://pytorch.org/docs/stable/_modules/torch/nn/utils/weight_norm.html
+
+    References
+    ----------
+    Miyato, T., Kataoka, T., Koyama, M., & Yoshida, Y. (2018).
+    Spectral Normalization for Generative Adversarial Networks.
+    Retrieved from http://arxiv.org/abs/1802.05957
+    """
     def __init__(self, name):
         self.name = name
 
