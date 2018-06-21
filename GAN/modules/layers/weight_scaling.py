@@ -51,6 +51,17 @@ class WeightScale(object):
         setattr(module, self.name, self.compute_weight(module))
 
 def weight_scale(module, gain=np.sqrt(2), name='weight'):
+    """
+    Applies equalized learning rate to weights
+
+    Parameters
+    ----------
+    module : module
+        Module scaling should be applied to (Conv/Linear)
+    gain : float
+        Gain of following activation layer
+        See torch.nn.init.calculate_gain
+    """
     WeightScale.apply(module, name, gain)
     return module
 
