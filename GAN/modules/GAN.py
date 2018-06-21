@@ -70,8 +70,6 @@ class GAN_Discriminator(GAN_Module):
 	def __init__(self):
 		super(GAN_Discriminator, self).__init__()
 
-		self.did_init_train = False
-
 	def train_init(self,alpha=1e-4,betas=(0.5,0.9)):
 		"""
 		Initialize Adam optimizer and BCE loss for discriminator
@@ -157,8 +155,6 @@ class GAN_Generator(GAN_Module):
 	def __init__(self):
 		super(GAN_Generator, self).__init__()
 
-		self.did_init_train = False
-
 	def train_init(self,alpha=1e-4,betas=(0.5,0.9)):
 		"""
 		Initialize Adam optimizer and BCE loss for generator
@@ -174,7 +170,7 @@ class GAN_Generator(GAN_Module):
 		self.loss = torch.nn.BCELoss()
 		self.did_init_train = True
 
-	def pre_train():
+	def pre_train(discriminator):
 		if not self.did_init_train:
 			self.train_init()
 
@@ -203,6 +199,8 @@ class GAN_Generator(GAN_Module):
 			BCE loss against evaluation of discriminator of generated samples
 			to be real
 		"""
+		self.pre_train(discriminator)
+
 		# Generate and discriminate
 		gen = self.forward(batch_noise)
 		disc = discriminator(gen)
@@ -241,8 +239,6 @@ class GAN_Discriminator_SoftPlus(GAN_Module):
 	"""
 	def __init__(self):
 		super(GAN_Discriminator_SoftPlus, self).__init__()
-
-		self.did_init_train = False
 
 	def train_init(self,alpha=1e-4,betas=(0.5,0.9)):
 		"""
@@ -321,8 +317,6 @@ class GAN_Generator_SoftPlus(GAN_Module):
 	def __init__(self):
 		super(GAN_Generator_SoftPlus, self).__init__()
 
-		self.did_init_train = False
-
 	def train_init(self,alpha=1e-4,betas=(0.5,0.9)):
 		"""
 		Initialize Adam optimizer for generator
@@ -338,7 +332,7 @@ class GAN_Generator_SoftPlus(GAN_Module):
 		self.loss = None
 		self.did_init_train = True
 
-	def pre_train():
+	def pre_train(discriminator):
 		if not self.did_init_train:
 			self.train_init()
 
@@ -367,7 +361,7 @@ class GAN_Generator_SoftPlus(GAN_Module):
 			Loss of evaluation of discriminator of generated samples
 			to be real
 		"""
-		self.pre_train()
+		self.pre_train(discriminator)
 
 		# Generate and discriminate
 		gen = self.forward(batch_noise)
@@ -381,4 +375,5 @@ class GAN_Generator_SoftPlus(GAN_Module):
 		# Update parameters
 		self.update_parameters()
 
-		return loss.data[0] # return loss
+		loss = loss.data[0]
+		return loss # return loss
