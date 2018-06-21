@@ -25,3 +25,8 @@ def cuda_check(module_list):
     for mod in module_list:
         module_list_new.append(mod.cuda())
     return module_list_new
+
+
+def change_learning_rate(optimizer,lr):
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
