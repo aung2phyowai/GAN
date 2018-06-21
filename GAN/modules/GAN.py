@@ -5,7 +5,7 @@ from torch import optim
 import torch.autograd as autograd
 import torch.nn.functional as F
 import numpy as np
-import utils
+import GAN.utils
 
 class GAN_Module(nn.Module):
 	"""
