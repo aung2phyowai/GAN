@@ -5,7 +5,7 @@ import joblib
 
 from braindecode.datautil.iterators import get_balanced_batches
 from EEGGAN.examples.CONV_CUB.model import Generator,Discriminator
-from EEGGAN.utils import weight_filler
+from EEGGAN.util import weight_filler
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
