@@ -1,3 +1,4 @@
+# coding=utf-8
 import braindecode
 from torch import nn
 from GAN.modules.layers.reshape import Reshape

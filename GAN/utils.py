@@ -1,3 +1,5 @@
+# coding=utf-8
+
 def cuda_check(module_list):
 	"""
 	Checks if any module or variable in a list has cuda() true and if so

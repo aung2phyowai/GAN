@@ -1,3 +1,4 @@
+# coding=utf-8
 from torch.nn.parameter import Parameter
 from torch.autograd import Variable
 import torch
