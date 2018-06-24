@@ -34,7 +34,7 @@ class GAN_Module(nn.Module):
 			Filename to save
 		"""
 		cuda = False
-		if self.is_cuda: cuda = True
+		if next(self.parameters()).is_cuda: cuda = True
 		cpu_model = self.cpu()
 		model_state = cpu_model.state_dict()
 		opt_state = cpu_model.optimizer.state_dict()
@@ -86,7 +86,7 @@ class GAN_Discriminator(GAN_Module):
 		self.loss = torch.nn.BCELoss()
 		self.did_init_train = True
 
-	def pre_train():
+	def pre_train(self):
 		if not self.did_init_train:
 			self.train_init()
 
@@ -95,7 +95,7 @@ class GAN_Discriminator(GAN_Module):
 		for p in self.parameters():
 			p.requires_grad = True
 
-	def update_parameters():
+	def update_parameters(self):
 		self.optimizer.step()
 
 	def train_batch(self, batch_real, batch_fake):
@@ -171,7 +171,7 @@ class GAN_Generator(GAN_Module):
 		self.loss = torch.nn.BCELoss()
 		self.did_init_train = True
 
-	def pre_train(discriminator):
+	def pre_train(self,discriminator):
 		if not self.did_init_train:
 			self.train_init()
 
@@ -180,7 +180,7 @@ class GAN_Generator(GAN_Module):
 		for p in discriminator.parameters():
 			p.requires_grad = False  # to avoid computation
 
-	def update_parameters():
+	def update_parameters(self):
 		self.optimizer.step()
 
 	def train_batch(self, batch_noise, discriminator):
@@ -253,7 +253,7 @@ class GAN_Discriminator_SoftPlus(GAN_Module):
 		self.loss = None
 		self.did_init_train = True
 
-	def pre_train():
+	def pre_train(self):
 		if not self.did_init_train:
 			self.train_init()
 
@@ -294,7 +294,7 @@ class GAN_Discriminator_SoftPlus(GAN_Module):
 		loss_fake = F.softplus(fx_fake).mean()
 		loss_fake.backward()
 
-		self.update_parameters()
+		self.update_parameters(self)
 
 		loss_real = loss_real.data[0]
 		loss_fake = loss_fake.data[0]
@@ -330,7 +330,7 @@ class GAN_Generator_SoftPlus(GAN_Module):
 		self.loss = None
 		self.did_init_train = True
 
-	def pre_train(discriminator):
+	def pre_train(self,discriminator):
 		if not self.did_init_train:
 			self.train_init()
 
@@ -339,7 +339,7 @@ class GAN_Generator_SoftPlus(GAN_Module):
 		for p in discriminator.parameters():
 			p.requires_grad = False  # to avoid computation
 
-	def update_parameters():
+	def update_parameters(self):
 		self.optimizer.step()
 
 	def train_batch(self, batch_noise, discriminator):

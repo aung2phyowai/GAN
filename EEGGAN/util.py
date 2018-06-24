@@ -1,4 +1,6 @@
 # coding=utf-8
+from torch.autograd import Variable
+from torch.nn import Module
 
 def cuda_check(module_list):
 	"""
@@ -17,7 +19,9 @@ def cuda_check(module_list):
 	"""
 	cuda = False
 	for mod in module_list:
-		cuda = mod.is_cuda
+		if isinstance(mod,Variable): cuda = mod.is_cuda
+		elif isinstance(mod,Module): cuda = next(mod.parameters()).is_cuda
+
 		if cuda:
 			break
 	if not cuda:

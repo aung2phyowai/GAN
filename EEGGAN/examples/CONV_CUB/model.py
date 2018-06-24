@@ -1,7 +1,7 @@
 # coding=utf-8
 import braindecode
 from torch import nn
-from EEGGAN.modules.layers.reshape import Reshape
+from EEGGAN.modules.layers.reshape import Reshape,PixelShuffle2d
 from EEGGAN.modules.layers.normalization import PixelNorm
 from EEGGAN.modules.layers.weight_scaling import weight_scale
 from EEGGAN.modules.layers.upsampling import CubicUpsampling1d,CubicUpsampling2d
@@ -14,8 +14,7 @@ from torch.nn.init import calculate_gain
 
 def create_disc_blocks(n_chans):
 	def create_conv_sequence(in_filters,out_filters):
-		return nn.Sequential(dropout_layer_disc,
-								weight_scale(nn.Conv1d(in_filters,in_filters,9,padding=4),
+		return nn.Sequential(weight_scale(nn.Conv1d(in_filters,in_filters,9,padding=4),
 														gain=calculate_gain('leaky_relu')),
 								nn.LeakyReLU(0.2),
 								weight_scale(nn.Conv1d(in_filters,out_filters,9,padding=4),
@@ -64,7 +63,7 @@ def create_disc_blocks(n_chans):
 	blocks.append(tmp_block)
 	tmp_block = ProgressiveDiscriminatorBlock(
 							  nn.Sequential(StdMap1d(),
-											create_conv_sequence(in_filt+1,50),
+											create_conv_sequence(51,50),
 											Reshape([[0],-1]),
 											weight_scale(nn.Linear(50*12,1),
 															gain=calculate_gain('linear'))),

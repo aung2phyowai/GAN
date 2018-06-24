@@ -42,7 +42,7 @@ class WGAN_Discriminator(GAN_Discriminator):
 		self.did_init_train = True
 
 	def update_parameters():
-		super(WGAN_Discriminator).update_parameters()
+		super(WGAN_Discriminator,self).update_parameters()
 		for p in self.parameters():
 			p.data.clamp_(-self.c,self.c)
 
@@ -193,7 +193,7 @@ class WGAN_I_Discriminator(GAN_Discriminator):
 		EEG-GAN: Generative adversarial networks for electroencephalograhic
 		(EEG) brain signals. Retrieved from https://arxiv.org/abs/1806.01875
 		"""
-		super(WGAN_I_Discriminator).train_init(alpha,betas)
+		super(WGAN_I_Discriminator,self).train_init(alpha,betas)
 		self.loss = None
 		self.lambd = lambd
 		self.one_sided_penalty = one_sided_penalty
