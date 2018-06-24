@@ -6,9 +6,9 @@ from torch import optim
 import torch.autograd as autograd
 import torch.nn.functional as F
 import numpy as np
-import GAN.utils
-import GAN.GAN_Discriminator
-import GAN.GAN_Generator
+import EEGGAN.util
+import EEGGAN.modules.GAN.GAN_Discriminator
+import EEGGAN.modules.GAN.GAN_Generator
 
 class WGAN_Discriminator(GAN_Discriminator):
 	"""

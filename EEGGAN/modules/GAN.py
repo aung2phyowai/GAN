@@ -3,10 +3,10 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torch import optim
+import EEGGAN.util
 import torch.autograd as autograd
 import torch.nn.functional as F
 import numpy as np
-import GAN.utils
 
 class GAN_Module(nn.Module):
 	"""
@@ -211,9 +211,6 @@ class GAN_Generator(GAN_Module):
 		ones_label = Variable(ones_label)
 
 		batch_noise,ones_label = utils.cuda_check([batch_noise,ones_label])
-
-		if cuda:
-			ones_label = ones_label.cuda()
 
 		loss = self.loss.forward(disc,ones_label)
 
