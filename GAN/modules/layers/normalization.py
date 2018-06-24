@@ -7,25 +7,25 @@ import numpy as np
 import torch.nn.functional as F
 
 class PixelNorm(nn.Module):
-    """
-    References
-    ----------
-    Karras, T., Aila, T., Laine, S., & Lehtinen, J. (2017).
-    Progressive Growing of GANs for Improved Quality, Stability, and Variation.
-    Retrieved from http://arxiv.org/abs/1710.10196
-    """
-    def forward(self,input,eps=1e-8):
-        tmp = torch.sqrt(torch.pow(input,2).mean(dim=1,keepdim=True)+eps)
-        input = input/tmp
-        return input
+	"""
+	References
+	----------
+	Karras, T., Aila, T., Laine, S., & Lehtinen, J. (2017).
+	Progressive Growing of GANs for Improved Quality, Stability, and Variation.
+	Retrieved from http://arxiv.org/abs/1710.10196
+	"""
+	def forward(self,input,eps=1e-8):
+		tmp = torch.sqrt(torch.pow(input,2).mean(dim=1,keepdim=True)+eps)
+		input = input/tmp
+		return input
 
 class LayerNorm(Module):
-    """
-    References
-    ----------
-    Ba, J. L., Kiros, J. R., & Hinton, G. E. (n.d.). Layer Normalization.
-    Retrieved from https://arxiv.org/pdf/1607.06450.pdf
-    """
+	"""
+	References
+	----------
+	Ba, J. L., Kiros, J. R., & Hinton, G. E. (n.d.). Layer Normalization.
+	Retrieved from https://arxiv.org/pdf/1607.06450.pdf
+	"""
 	def __init__(self,num_features,n_dim,eps=1e-5,affine=True):
 		assert(n_dim>1)
 
