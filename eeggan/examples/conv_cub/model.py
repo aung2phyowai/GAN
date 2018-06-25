@@ -1,14 +1,14 @@
 # coding=utf-8
 import braindecode
 from torch import nn
-from EEGGAN.modules.layers.reshape import Reshape,PixelShuffle2d
-from EEGGAN.modules.layers.normalization import PixelNorm
-from EEGGAN.modules.layers.weight_scaling import weight_scale
-from EEGGAN.modules.layers.upsampling import CubicUpsampling1d,CubicUpsampling2d
-from EEGGAN.modules.layers.stdmap import StdMap1d
-from EEGGAN.modules.progressive import ProgressiveGenerator,ProgressiveGeneratorBlock,\
+from eeggan.modules.layers.reshape import Reshape,PixelShuffle2d
+from eeggan.modules.layers.normalization import PixelNorm
+from eeggan.modules.layers.weight_scaling import weight_scale
+from eeggan.modules.layers.upsampling import CubicUpsampling1d,CubicUpsampling2d
+from eeggan.modules.layers.stdmap import StdMap1d
+from eeggan.modules.progressive import ProgressiveGenerator,ProgressiveGeneratorBlock,\
 							ProgressiveDiscriminator,ProgressiveDiscriminatorBlock
-from EEGGAN.modules.WGAN import WGAN_I_Generator,WGAN_I_Discriminator
+from eeggan.modules.wgan import WGAN_I_Generator,WGAN_I_Discriminator
 from torch.nn.init import calculate_gain
 
 

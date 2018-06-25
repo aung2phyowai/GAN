@@ -7,8 +7,8 @@ sys.path.append("/home/hartmank/git/GAN_clean")
 
 
 from braindecode.datautil.iterators import get_balanced_batches
-from EEGGAN.examples.CONV_CUB.model import Generator,Discriminator
-from EEGGAN.util import weight_filler
+from eeggan.examples.conv_cub.model import Generator,Discriminator
+from eeggan.util import weight_filler
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
