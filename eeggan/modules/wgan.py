@@ -246,12 +246,12 @@ class WGAN_I_Discriminator(GAN_Discriminator):
 		loss_center = 0
 		if self.eps_drift>0:
 			tmp_drift = self.eps_drift*loss_real**2
-			tmp_drift.backward(one,retain_graph=self.eps_center>0)
+			tmp_drift.backward(retain_graph=self.eps_center>0)
 			loss_drift = tmp_drift.data[0]
 		if self.eps_center>0:
 			tmp_center = (loss_real+loss_fake)
 			tmp_center = self.eps_center*tmp_center**2
-			tmp_center.backward(one)
+			tmp_center.backward()
 			loss_center = tmp_center.data[0]
 
 		dist = 1

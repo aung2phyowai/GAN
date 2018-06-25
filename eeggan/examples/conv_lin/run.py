@@ -197,7 +197,7 @@ for i_block in range(i_block_tmp,n_blocks):
             plt.title('Penalty')
             plt.legend()
             plt.subplot(3,2,4)
-            plt.plot(np.asarray(losses_d)[:,1]-np.asarray(losses_d)[:,0],label='Wasserstein Distance')
+            plt.plot(-np.asarray(losses_d)[:,0]-np.asarray(losses_d)[:,1],label='Wasserstein Distance')
             plt.title('Wasserstein Distance')
             plt.legend()
             plt.subplot(3,2,5)
