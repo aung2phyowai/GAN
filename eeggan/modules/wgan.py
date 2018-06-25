@@ -264,7 +264,7 @@ class WGAN_I_Discriminator(GAN_Discriminator):
 		# Update parameters
 		self.update_parameters()
 
-		loss_real = loss_real.data[0]
+		loss_real = -loss_real.data[0]
 		loss_fake = loss_fake.data[0]
 		loss_penalty = loss_penalty.data[0]
 		return loss_real,loss_fake,loss_penalty,loss_drift,loss_center # return loss
