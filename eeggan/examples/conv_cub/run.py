@@ -1,5 +1,5 @@
-%load_ext autoreload
-%autoreload 2
+#%load_ext autoreload
+#%autoreload 2
 import os
 import joblib
 import sys
@@ -116,11 +116,6 @@ for i_block in range(i_block_tmp,n_blocks):
             fade_alpha += 1./rampup
             generator.model.alpha = fade_alpha
             discriminator.model.alpha = fade_alpha
-
-        if i_block>0 and rampup_lr>0:
-            cur_rampup = i_epoch/rampup_lr
-        else:
-            cur_rampup = 1.
 
         batches = get_balanced_batches(train.shape[0], rng, True, batch_size=n_batch)
         iters = int(len(batches)/n_critic)
