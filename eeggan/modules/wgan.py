@@ -254,6 +254,7 @@ class WGAN_I_Discriminator(GAN_Discriminator):
 			tmp_center.backward(one)
 			loss_center = tmp_center.data[0]
 
+		dist = 1
 		if self.distance_weighting:
 			dist = (loss_real-loss_fake).detach()
 			dist = dist.clamp(min=0)
@@ -305,7 +306,7 @@ class WGAN_I_Discriminator(GAN_Discriminator):
 		gradients = gradients.view(gradients.size(0), -1)
 		tmp = (gradients.norm(2, dim=1) - 1)
 		if self.one_sided_penalty:
-				  tmp = tmp.clamp(min=0)
+			tmp = tmp.clamp(min=0)
 		gradient_penalty = ((tmp) ** 2).mean()
 
 		return gradient_penalty
