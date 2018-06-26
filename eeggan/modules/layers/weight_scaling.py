@@ -2,6 +2,7 @@
 import torch
 from torch import nn
 import numpy as np
+from eeggan.modules.layers.multiconv import MultiConv1d
 from torch.autograd import Variable
 import torch.nn.functional as F
 
@@ -63,7 +64,11 @@ def weight_scale(module, gain=np.sqrt(2), name='weight'):
 		Gain of following activation layer
 		See torch.nn.init.calculate_gain
 	"""
-	WeightScale.apply(module, name, gain)
+	if isinstance(module,MultiConv1d):
+		for i in range(len(module.convs)):
+			WeightScale.apply(module.convs[i], name, gain)
+	else:
+		WeightScale.apply(module, name, gain)
 	return module
 
 def remove_weight_scale(module, name='weight'):

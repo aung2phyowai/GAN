@@ -40,7 +40,12 @@ def change_learning_rate(optimizer,lr):
 
 def weight_filler(m):
 	classname = m.__class__.__name__
-	if classname.find('Conv') != -1 or classname.find('Linear') != -1:
+	if classname.find('MultiConv') != -1:
+		for conv in m.convs:
+			conv.weight.data.normal_(0.0, 1.)
+			if conv.bias is not None:
+				conv.bias.data.fill_(0.)
+	elif classname.find('Conv') != -1 or classname.find('Linear') != -1:
 		m.weight.data.normal_(0.0, 1.)
 		if m.bias is not None:
 			m.bias.data.fill_(0.)
