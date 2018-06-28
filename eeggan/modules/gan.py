@@ -221,7 +221,7 @@ class GAN_Generator(GAN_Module):
 		self.update_parameters()
 
 		loss = loss.data[0]
-		return loss.data[0] # return loss
+		return loss # return loss
 
 
 class GAN_Discriminator_SoftPlus(GAN_Module):
@@ -262,7 +262,7 @@ class GAN_Discriminator_SoftPlus(GAN_Module):
 		for p in self.parameters():
 			p.requires_grad = True
 
-	def update_parameters():
+	def update_parameters(self):
 		self.optimizer.step()
 
 	def train_batch(self, batch_real, batch_fake):
@@ -294,7 +294,7 @@ class GAN_Discriminator_SoftPlus(GAN_Module):
 		loss_fake = F.softplus(fx_fake).mean()
 		loss_fake.backward()
 
-		self.update_parameters(self)
+		self.update_parameters()
 
 		loss_real = loss_real.data[0]
 		loss_fake = loss_fake.data[0]

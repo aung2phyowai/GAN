@@ -46,7 +46,7 @@ def weight_filler(m):
 			if conv.bias is not None:
 				conv.bias.data.fill_(0.)
 	elif classname.find('Conv') != -1 or classname.find('Linear') != -1:
-		m.weight.data.normal_(0.0, 1.)
+		m.weight.data.normal_(0.0, 1.) # From progressive GAN paper
 		if m.bias is not None:
 			m.bias.data.fill_(0.)
 	elif classname.find('BatchNorm') != -1 or classname.find('LayerNorm') != -1:

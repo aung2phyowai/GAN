@@ -22,7 +22,7 @@ class WGAN_Discriminator(GAN_Discriminator):
 	def __init__(self):
 		super(WGAN_Discriminator, self).__init__()
 
-	def train_init(self,alpha=1e-4,c=0.01):
+	def train_init(self,lr=1e-4,c=0.01):
 		"""
 		Initialize RMS optimizer and weight clipping for discriminator
 
@@ -41,7 +41,7 @@ class WGAN_Discriminator(GAN_Discriminator):
 		self.optimizer = optim.RMSprop(self.parameters(),lr=lr)
 		self.did_init_train = True
 
-	def update_parameters():
+	def update_parameters(self):
 		super(WGAN_Discriminator,self).update_parameters()
 		for p in self.parameters():
 			p.data.clamp_(-self.c,self.c)
@@ -159,7 +159,7 @@ class WGAN_I_Discriminator(GAN_Discriminator):
 
 	def train_init(self,alpha=1e-4,betas=(0.5,0.9),
 				   lambd=10,one_sided_penalty=False,distance_weighting=False,
-				   eps_drift=0.,eps_center=0.):
+				   eps_drift=0.,eps_center=0.,lambd_consistency_term=0.):
 		"""
 		Initialize Adam optimizer for discriminator
 
@@ -200,6 +200,7 @@ class WGAN_I_Discriminator(GAN_Discriminator):
 		self.distance_weighting = distance_weighting
 		self.eps_drift = eps_drift
 		self.eps_center = eps_center
+		self.lambd_consistency_term = lambd_consistency_term
 
 	def train_batch(self, batch_real, batch_fake):
 		"""
@@ -253,6 +254,10 @@ class WGAN_I_Discriminator(GAN_Discriminator):
 			tmp_center = self.eps_center*tmp_center**2
 			tmp_center.backward()
 			loss_center = tmp_center.data[0]
+
+		#loss_consistency_term
+		#if self.lambd_consistency_term>0:
+		#	batch_real_1
 
 		dist = 1
 		if self.distance_weighting:
