@@ -35,7 +35,7 @@ rampup = 2000.
 block_epochs = [2000,4000,4000,4000,4000,4000]
 
 subj_ind = int(os.getenv('SLURM_ARRAY_TASK_ID','0'))
-task_ind = 0#subj_ind
+task_ind = 0 #subj_ind
 #subj_ind = 9
 subj_names = ['BhNoMoSc1',
              'FaMaMoSc1',
@@ -59,6 +59,9 @@ random.seed(task_ind)
 rng = np.random.RandomState(task_ind)
 
 # import data with EEGDataClass
+
+data_path = r'C:\Users\hplis\Downloads\eeg_files'
+dataset_class = EEGDataClass(data_path)
 
 
 train_set = EEG_data['train_set']

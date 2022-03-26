@@ -17,7 +17,7 @@ class EEGDataClass(Dataset):
 
         for file in os.listdir(dir):
             if '.set' in file:
-                self.get_events(file)
+                self.get_events(dir + file)
 
     def get_events(self, fp):
         raw = mne.io.read_raw_eeglab(fp,eog='auto')

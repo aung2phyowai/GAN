@@ -1,5 +1,5 @@
 appdirs==1.4.4
-Braindecode==0.6
+Braindecode==0.4.85
 cached-property==1.5.2
 certifi==2021.10.8
 charset-normalizer==2.0.12
@@ -36,3 +36,4 @@ torchvision==0.12.0+cu113
 tqdm==4.63.1
 typing_extensions==4.1.1
 urllib3==1.26.9
+
