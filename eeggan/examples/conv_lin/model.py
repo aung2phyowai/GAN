@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append('../../../')
+
 # coding=utf-8
 import braindecode
 from torch import nn

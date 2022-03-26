@@ -6,6 +6,9 @@ import sys
 sys.path.append("/home/hartmank/git/GAN_clean")
 
 
+sys.path.append('../../../')
+
+
 from braindecode.datautil.iterators import get_balanced_batches
 from eeggan.examples.conv_lin.model import Generator,Discriminator
 from eeggan.util import weight_filler
@@ -56,12 +59,21 @@ torch.cuda.manual_seed_all(task_ind)
 random.seed(task_ind)
 rng = np.random.RandomState(task_ind)
 
-data = os.path.join('/data/schirrmr/hartmank/data/GAN/cnt',subj_names[subj_ind]+'_FCC4h.cnt')
-EEG_data = joblib.load(data)
-train_set = EEG_data['train_set']
-test_set = EEG_data['test_set']
-train = np.concatenate((train_set.X,test_set.X))
-target = np.concatenate((train_set.y,test_set.y))
+# data = os.path.join('/data/schirrmr/hartmank/data/GAN/cnt',subj_names[subj_ind]+'_FCC4h.cnt')
+# EEG_data = joblib.load(data)
+# train_set = EEG_data['train_set']
+# test_set = EEG_data['test_set']
+
+# train = np.concatenate((train_set.X,test_set.X))
+# target = np.concatenate((train_set.y,test_set.y))
+
+from eeggan.dataset.dataset import EEGDataClass
+dc = EEGDataClass('../../dataset/DataRawSet_256/DataRawSet_256/')
+import pdb
+pdb.set_trace()
+
+train = dc.events
+target = np.ones(train.shape[0])
 
 train = train[:,:,:,None]
 train = train-train.mean()
@@ -70,8 +82,9 @@ train = train/np.abs(train).max()
 target_onehot = np.zeros((target.shape[0],2))
 target_onehot[:,target] = 1
 
+modelpath = './test.cnt'
 
-modelpath = '/data/schirrmr/hartmank/data/GAN/models/GAN_debug/%s/'%('PAPERFIN4_'+subj_names[subj_ind]+'_FFC4h_WGAN_adaptlambclamp_CONV_LIN_10l_run%d'%task_ind)
+modelpath = '/model/model.f'
 modelname = 'Progressive%s'
 if not os.path.exists(modelpath):
     os.makedirs(modelpath)

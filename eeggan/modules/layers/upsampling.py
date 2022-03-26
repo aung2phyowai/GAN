@@ -117,7 +117,7 @@ class CubicUpsampling2d(nn.Module):
 		input = F.pad(input,pad=(0,0,2,2),mode='replicate')
 		#output = input
 		weight = Variable(self.kernel.expand(old_size[1],-1,-1,-1),requires_grad=False).contiguous()
-		print weight.size()
+		# print weight.size()
 		output = F.conv_transpose2d(input,weight,groups=old_size[1],stride=(self.scale_factor,1))
 		output = output[:,:,4*(self.scale_factor-1)+4:-(4*(self.scale_factor-1)+2),:]
 		return output
