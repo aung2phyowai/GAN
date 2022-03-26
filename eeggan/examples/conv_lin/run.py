@@ -68,7 +68,9 @@ rng = np.random.RandomState(task_ind)
 # target = np.concatenate((train_set.y,test_set.y))
 
 from eeggan.dataset.dataset import EEGDataClass
-dc = EEGDataClass('../../dataset/DataRawSet_256/DataRawSet_256/')
+data_path = r'C:\Users\hplis\Downloads\eeg_files'
+dc = EEGDataClass(data_path)
+
 import pdb
 pdb.set_trace()
 
