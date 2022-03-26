@@ -3,6 +3,10 @@ from  scipy.signal import butter, buttord
 from  scipy.signal import iirnotch
 from  scipy.signal import filtfilt
 from scipy.signal import decimate
+import os
+import numpy as np
+from torch.utils.data import Dataset
+
 
 
 class EEGDataClass(Dataset):
@@ -29,9 +33,8 @@ class EEGDataClass(Dataset):
 
         sf = decimate(sf, 8)
         Fs_new = int(Fs // 8)
-        eventstarts = mne.events_from_annotations(
-            raw.copy().resample(256)
-        )[0]
+        eventstarts = mne.events_from_annotations(raw.copy().resample(256))[0]
+
         eventstarts=eventstarts[:,0][eventstarts[:,2]==1]
 
         ch_num = 1
@@ -43,7 +46,7 @@ class EEGDataClass(Dataset):
                 init_mean = event[:int(0.2 * Fs_new)].mean()
                 events[i,j] = event - init_mean
 
-        self.events += events
+            self.events += events
 
     def __getitem__(self, idx):
         return self.events[idx], True

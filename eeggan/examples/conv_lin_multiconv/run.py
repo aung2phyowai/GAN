@@ -3,7 +3,6 @@
 import os
 import joblib
 import sys
-sys.path.append("/home/hartmank/git/GAN_clean")
 
 
 from braindecode.datautil.iterators import get_balanced_batches
@@ -15,6 +14,9 @@ from torch.autograd import Variable
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import wandb
+from eeggan.dataset.dataset import EEGDataClass
+from eeggan.modules.layers import mapping_network
 
 plt.switch_backend('agg')
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
@@ -56,8 +58,8 @@ torch.cuda.manual_seed_all(task_ind)
 random.seed(task_ind)
 rng = np.random.RandomState(task_ind)
 
-data = os.path.join('/data/schirrmr/hartmank/data/GAN/cnt',subj_names[subj_ind]+'_FCC4h.cnt')
-EEG_data = joblib.load(data)
+
+
 train_set = EEG_data['train_set']
 test_set = EEG_data['test_set']
 train = np.concatenate((train_set.X,test_set.X))
@@ -71,8 +73,8 @@ target_onehot = np.zeros((target.shape[0],2))
 target_onehot[:,target] = 1
 
 
-modelpath = '/data/schirrmr/hartmank/data/GAN/models/GAN_debug/%s/'%('PAPERFIN4_'+subj_names[subj_ind]+'_FFC4h_WGAN_CONV_LIN_multiconv_2run%d'%task_ind)
-modelname = 'Progressive%s'
+modelpath = 'models/'
+modelname = 'Progressive1'
 if not os.path.exists(modelpath):
     os.makedirs(modelpath)
 
