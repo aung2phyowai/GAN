@@ -15,6 +15,7 @@ from torch.autograd import Variable
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import wandb
 
 plt.switch_backend('agg')
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
@@ -99,10 +100,15 @@ discriminator = discriminator.cuda()
 generator.train()
 discriminator.train()
 
+
 losses_d = []
 losses_g = []
 i_epoch = 0
 z_vars_im = rng.normal(0,1,size=(1000,n_z)).astype(np.float32)
+
+# start wandb
+wandb.init(project="EEG_GAN", entity="hubertp")
+wandb.watch(model, log_freq=5)
 
 for i_block in range(i_block_tmp,n_blocks):
     c = 0
@@ -138,12 +144,26 @@ for i_block in range(i_block_tmp,n_blocks):
         losses_d.append(loss_d)
         losses_g.append(loss_g)
 
+        # stylegan2 path length regularization
+        if i_block>0:
+
 
         if i_epoch%100 == 0:
             generator.eval()
             discriminator.eval()
 
             print('Epoch: %d   Loss_F: %.3f   Loss_R: %.3f   Penalty: %.4f   Loss_G: %.3f'%(i_epoch,loss_d[0],loss_d[1],loss_d[2],loss_g))
+
+            if wandb and args.wandb:
+                wandb.log(
+                    {
+                        "Epoch": i_epoch,
+                        "Loss_F": loss_d[0],
+                        "Loss_R": loss_d[1],
+                        "Penalty": loss_d[2],
+                        "Generator Loss": loss_g
+                    }
+                )
             joblib.dump((i_epoch,losses_d,losses_g),os.path.join(modelpath,modelname%jobid+'_.data'),compress=True)
             joblib.dump((i_epoch,losses_d,losses_g),os.path.join(modelpath,modelname%jobid+'_%d.data'%i_epoch),compress=True)
             #joblib.dump((n_epochs,n_z,n_critic,batch_size,lr),os.path.join(modelpath,modelname%jobid+'_%d.params'%i_epoch),compress=True)
@@ -162,7 +182,7 @@ for i_block in range(i_block_tmp,n_blocks):
             plt.figure()
             plt.plot(freqs_tmp,np.log(fake_amps),label='Fake')
             plt.plot(freqs_tmp,np.log(train_amps),label='Real')
-            plt.title('Frequency Spektrum')
+            plt.title('Frequency Spectrum')
             plt.xlabel('Hz')
             plt.legend()
             plt.savefig(os.path.join(modelpath,modelname%jobid+'_fft_%d_%d.png'%(i_block,i_epoch)))
