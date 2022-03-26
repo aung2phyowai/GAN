@@ -114,8 +114,8 @@ fade_alpha = 1.
 generator.model.alpha = fade_alpha
 discriminator.model.alpha = fade_alpha
 
-generator = generator.cuda()
-discriminator = discriminator.cuda()
+generator = generator.cpu()
+discriminator = discriminator.cpu()
 generator.train()
 discriminator.train()
 
@@ -127,9 +127,10 @@ z_vars_im = rng.normal(0,1,size=(1000,n_z)).astype(np.float32)
 for i_block in range(i_block_tmp,n_blocks):
     c = 0
 
-    train_tmp = discriminator.model.downsample_to_block(Variable(torch.from_numpy(train).cuda(),volatile=True),discriminator.model.cur_block).data.cpu()
+    train_tmp = discriminator.model.downsample_to_block(Variable(torch.from_numpy(train).cpu(),volatile=True),discriminator.model.cur_block).data.cpu()
 
     for i_epoch in range(i_epoch_tmp,block_epochs[i_block]):
+
         i_epoch_tmp = 0
 
         if fade_alpha<1:
@@ -143,16 +144,18 @@ for i_block in range(i_block_tmp,n_blocks):
         for it in range(iters):
             for i_critic in range(n_critic):
                 train_batches = train_tmp[batches[it*n_critic+i_critic]]
-                batch_real = Variable(train_batches,requires_grad=True).cuda()
+                batch_real = Variable(train_batches,requires_grad=True).cpu()
 
                 z_vars = rng.normal(0,1,size=(len(batches[it*n_critic+i_critic]),n_z)).astype(np.float32)
-                z_vars = Variable(torch.from_numpy(z_vars),volatile=True).cuda()
-                batch_fake = Variable(generator(z_vars).data,requires_grad=True).cuda()
+                z_vars = Variable(torch.from_numpy(z_vars),volatile=True).cpu()
+                
+                output = generator(z_vars)
+                batch_fake = Variable(output.data,requires_grad=True).cpu()
 
                 loss_d = discriminator.train_batch(batch_real,batch_fake)
                 assert np.all(np.isfinite(loss_d))
             z_vars = rng.normal(0,1,size=(n_batch,n_z)).astype(np.float32)
-            z_vars = Variable(torch.from_numpy(z_vars),requires_grad=True).cuda()
+            z_vars = Variable(torch.from_numpy(z_vars),requires_grad=True).cpu()
             loss_g = generator.train_batch(z_vars,discriminator)
 
         losses_d.append(loss_d)
@@ -174,7 +177,7 @@ for i_block in range(i_block_tmp,n_blocks):
             train_amps = np.abs(train_fft).mean(axis=3).mean(axis=0).squeeze()
 
 
-            z_vars = Variable(torch.from_numpy(z_vars_im),volatile=True).cuda()
+            z_vars = Variable(torch.from_numpy(z_vars_im),volatile=True).cpu()
             batch_fake = generator(z_vars)
             fake_fft = np.fft.rfft(batch_fake.data.cpu().numpy(),axis=2)
             fake_amps = np.abs(fake_fft).mean(axis=3).mean(axis=0).squeeze()
