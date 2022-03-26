@@ -94,39 +94,23 @@ def create_gen_blocks(n_chans,z_vars):
 		return nn.Upsample(mode='bilinear',scale_factor=(2,1))
 	blocks = []
 	tmp_block = ProgressiveGeneratorBlock(
-								nn.Sequential(weight_scale(nn.Linear(z_vars,50*12),
-														gain=calculate_gain('leaky_relu')),
-												nn.LeakyReLU(0.2),
-												Reshape([[0],50,-1]),
-												create_conv_sequence(50,50)),
-								create_out_sequence(n_chans,50),
-								create_fade_sequence(2)
-								)
+		nn.Sequential(weight_scale(nn.Linear(z_vars, 50 * 12),
+								   gain=calculate_gain('leaky_relu')),
+					  nn.LeakyReLU(0.2),
+					  Reshape([[0], 50, -1]),
+					  create_conv_sequence(50, 50)),
+		create_out_sequence(n_chans, 50),
+		create_fade_sequence(2)
+	)
 	blocks.append(tmp_block)
-	tmp_block = ProgressiveGeneratorBlock(
-								create_conv_sequence(50,50),
-								create_out_sequence(n_chans,50),
-								create_fade_sequence(2)
-								)
-	blocks.append(tmp_block)
-	tmp_block = ProgressiveGeneratorBlock(
-								create_conv_sequence(50,50),
-								create_out_sequence(n_chans,50),
-								create_fade_sequence(2)
-								)
-	blocks.append(tmp_block)
-	tmp_block = ProgressiveGeneratorBlock(
-								create_conv_sequence(50,50),
-								create_out_sequence(n_chans,50),
-								create_fade_sequence(2)
-								)
-	blocks.append(tmp_block)
-	tmp_block = ProgressiveGeneratorBlock(
-								create_conv_sequence(50,50),
-								create_out_sequence(n_chans,50),
-								create_fade_sequence(2)
-								)
-	blocks.append(tmp_block)
+	for ib in range(n_blocks-1):
+		tmp_block = ProgressiveGeneratorBlock(
+									create_conv_sequence(50,50),
+									create_out_sequence(n_chans,50),
+									create_fade_sequence(2)
+									)
+		blocks.append(tmp_block)
+
 	tmp_block = ProgressiveGeneratorBlock(
 								create_conv_sequence(50,50),
 								create_out_sequence(n_chans,50),
