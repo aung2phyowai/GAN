@@ -3,6 +3,7 @@
 import os
 import joblib
 import sys
+import pickle 
 sys.path.append("/home/hartmank/git/GAN_clean")
 
 
@@ -67,24 +68,30 @@ rng = np.random.RandomState(task_ind)
 # train = np.concatenate((train_set.X,test_set.X))
 # target = np.concatenate((train_set.y,test_set.y))
 
-from eeggan.dataset.dataset import EEGDataClass
-dc = EEGDataClass('../../dataset/DataRawSet_256/DataRawSet_256/')
-import pdb
-pdb.set_trace()
+datapath = './data/train.pkl'
+if not os.path.exists(datapath):
+    from eeggan.dataset.dataset import EEGDataClass
 
-train = dc.events
-target = np.ones(train.shape[0])
+    dc = EEGDataClass('../../dataset/DataRawSet_256/DataRawSet_256/')
 
-train = train[:,:,:,None]
+    train = np.vstack([e[0] for e in dc.events])
+    target = np.ones(train.shape[0]).astype(int)
+    data_tuple = (train, target)
+    pickle.dump(data_tuple, open(datapath, 'wb'))
+
+data_tuple = pickle.load(open(datapath, 'rb'))
+
+train = train[:,:,None]
 train = train-train.mean()
 train = train/train.std()
 train = train/np.abs(train).max()
+
 target_onehot = np.zeros((target.shape[0],2))
-target_onehot[:,target] = 1
+target_onehot[:, target] = 1
 
 modelpath = './test.cnt'
 
-modelpath = '/model/model.f'
+# modelpath = '/model/model.f'
 modelname = 'Progressive%s'
 if not os.path.exists(modelpath):
     os.makedirs(modelpath)
