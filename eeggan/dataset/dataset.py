@@ -19,7 +19,7 @@ class EEGDataClass():
         for file in tqdm(os.listdir(path)):
             if '.set' in file:
                 # Path should be def
-                self.get_events(path + file)
+                self.get_events(path + '/' + file)
 
     def get_events(self, fp):
         raw = mne.io.read_raw_eeglab(fp,eog='auto')
