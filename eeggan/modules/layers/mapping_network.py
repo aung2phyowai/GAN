@@ -1,9 +1,9 @@
 class MappingNetwork(torch.nn.Module):
     def __init__(self,
         z_dim,                      # Input latent (Z) dimensionality, 0 = no latent.w_dim,                      # Intermediate latent (W) dimensionality.
-	      w_dim,                      # Intermediate latent (W) dimensionality.
-				num_layers      = 8,        # Number of mapping layers.
-				intermediete_layer_features = None, # List of intermediete layers dimensionality, if = None equal to w_dim
+	    w_dim,                      # Intermediate latent (W) dimensionality.
+        num_layers      = 8,        # Number of mapping layers.
+        intermediete_layer_features = None, # List of intermediete layers dimensionality, if = None equal to w_dim
         activation      = 'lrelu',  # Activation function: 'relu', 'lrelu', etc.
         lr_multiplier   = 0.01,     # Learning rate multiplier for the mapping layers.
         w_avg_beta      = 0.998,    # Decay for tracking the moving average of W during training, None = do not track.
