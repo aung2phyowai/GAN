@@ -119,7 +119,12 @@ class WGAN_I_Discriminator(GAN_Module):
 		EEG-GAN: Generative adversarial networks for electroencephalograhic
 		(EEG) brain signals. Retrieved from https://arxiv.org/abs/1806.01875
 		"""
-		super(WGAN_I_Discriminator,self).train_init(alpha,betas)
+		# super(WGAN_I_Discriminator,self).train_init(alpha,betas)
+
+		self.optimizer = optim.Adam(self.parameters(),lr=alpha,betas=betas)
+		self.loss = torch.nn.BCELoss()
+		self.did_init_train = True
+
 		self.loss = None
 		self.lambd = lambd
 		self.one_sided_penalty = one_sided_penalty
@@ -314,6 +319,7 @@ class WGAN_I_Generator(GAN_Module):
 			WGAN loss against evaluation of discriminator of generated samples
 			to be real
 		"""
+
 		self.pre_train(discriminator)
 
 		mone = torch.FloatTensor([1]) * -1
