@@ -7,144 +7,70 @@ import torch.autograd as autograd
 import torch.nn.functional as F
 import numpy as np
 import eeggan.util as utils
-from eeggan.modules.gan import GAN_Discriminator
-from eeggan.modules.gan import GAN_Generator
 
-class WGAN_Discriminator(GAN_Discriminator):
+
+# coding=utf-8
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
+from torch import optim
+import eeggan.util as utils
+import torch.autograd as autograd
+import torch.nn.functional as F
+import numpy as np
+
+class GAN_Module(nn.Module):
 	"""
-	Wasserstein GAN discriminator
+	Parent module for different GANs
 
-	References
+	Attributes
 	----------
-	Arjovsky, M., Chintala, S., & Bottou, L. (2017). Wasserstein GAN.
-	Retrieved from http://arxiv.org/abs/1701.07875
+	optimizer : torch.optim.Optimizer
+		Optimizer for training the model parameters
+	loss : torch.nn.Loss
+		Loss function
 	"""
 	def __init__(self):
-		super(WGAN_Discriminator, self).__init__()
+		super(GAN_Module, self).__init__()
 
-	def train_init(self,lr=1e-4,c=0.01):
+		self.did_init_train = False
+
+	def save_model(self,fname):
 		"""
-		Initialize RMS optimizer and weight clipping for discriminator
+		Saves `state_dict` of model and optimizer
 
 		Parameters
 		----------
-		alpha : float, optional
-			Learning rate for Adam
-		c : float, optional
-			Limits for weight clipping
+		fname : str
+			Filename to save
 		"""
-		self.c = c
-		for p in self.parameters():
-			p.data.clamp_(-self.c,self.c)
+		cuda = False
+		if next(self.parameters()).is_cuda: cuda = True
+		cpu_model = self.cpu()
+		model_state = cpu_model.state_dict()
+		opt_state = cpu_model.optimizer.state_dict()
 
-		self.loss = None
-		self.optimizer = optim.RMSprop(self.parameters(),lr=lr)
-		self.did_init_train = True
+		torch.save((model_state,opt_state,self.did_init_train),fname)
+		if cuda:
+			self.cuda()
 
-	def update_parameters(self):
-		super(WGAN_Discriminator,self).update_parameters()
-		for p in self.parameters():
-			p.data.clamp_(-self.c,self.c)
-
-	def train_batch(self, batch_real, batch_fake):
+	def load_model(self,fname):
 		"""
-		Train discriminator for one batch of real and fake data
+		Loads `state_dict` of model and optimizer
 
 		Parameters
 		----------
-		batch_real : autograd.Variable
-			Batch of real data
-		batch_fake : autograd.Variable
-			Batch of fake data
-
-		Returns
-		-------
-		loss_real : float
-			WGAN loss for real data
-		loss_fake : float
-			WGAN loss for fake data
+		fname : str
+			Filename to load from
 		"""
-		self.pre_train()
+		model_state,opt_state,self.did_init_train = torch.load(fname)
 
-		# Compute output and loss
-		fx_real = self.forward(batch_real)
-		loss_real = -torch.mean(fx_real)
-		loss_real.backward()
-
-		fx_fake = self.forward(batch_fake)
-		loss_fake = torch.mean(fx_fake)
-		loss_fake.backward()
-
-		loss = loss_real + loss_fake
-
-		self.update_parameters()
-
-		loss_real = loss_real.data[0]
-		loss_fake = loss_fake.data[0]
-		return loss_real,loss_fake # return loss
-
-
-class WGAN_Generator(GAN_Generator):
-	"""
-	Wasserstein GAN generator
-
-	References
-	----------
-	Arjovsky, M., Chintala, S., & Bottou, L. (2017). Wasserstein GAN.
-	Retrieved from http://arxiv.org/abs/1701.07875
-	"""
-	def __init__(self):
-		super(WGAN_Generator, self).__init__()
-
-	def train_init(self, lr=1e-4):
-		"""
-		Initialize RMS optimizer for generator
-
-		Parameters
-		----------
-		alpha : float, optional
-			Learning rate for Adam
-		"""
-		self.loss = None
-		self.optimizer = optim.RMSprop(self.parameters(),lr=lr)
-		self.did_init_train = True
-
-	def train_batch(self, batch_noise, discriminator):
-		"""
-		Train generator for one batch of latent noise
-
-		Parameters
-		----------
-		batch_noise : autograd.Variable
-			Batch of latent noise
-		discriminator : nn.Module
-			Discriminator to evaluate realness of generated data
-
-		Returns
-		-------
-		loss : float
-			WGAN loss against evaluation of discriminator of generated samples
-			to be real
-		"""
-		self.pre_train(discriminator)
-
-		# Generate and discriminate
-		gen = self.forward(batch_noise)
-		disc = discriminator(gen)
-		loss = -torch.mean(disc)
-
-		# Backprop gradient
-		loss.backward()
-
-		# Update parameters
-		self.update_parameters()
-
-		loss = loss.data[0]
-		return loss # return loss
+		self.load_state_dict(model_state)
+		self.optimizer.load_state_dict(opt_state)
 
 
 
-class WGAN_I_Discriminator(GAN_Discriminator):
+class WGAN_I_Discriminator(GAN_Module):
 	"""
 	Improved Wasserstein GAN discriminator
 
@@ -201,6 +127,20 @@ class WGAN_I_Discriminator(GAN_Discriminator):
 		self.eps_drift = eps_drift
 		self.eps_center = eps_center
 		self.lambd_consistency_term = lambd_consistency_term
+
+
+	def pre_train(self):
+		if not self.did_init_train:
+			self.train_init()
+
+		self.zero_grad()
+		self.optimizer.zero_grad()
+		for p in self.parameters():
+			p.requires_grad = True
+
+	def update_parameters(self):
+		self.optimizer.step()
+
 
 	def train_batch(self, batch_real, batch_fake):
 		"""
@@ -317,7 +257,7 @@ class WGAN_I_Discriminator(GAN_Discriminator):
 		return gradient_penalty
 
 
-class WGAN_I_Generator(GAN_Generator):
+class WGAN_I_Generator(GAN_Module):
 	"""
 	Improved Wasserstein GAN generator
 
@@ -344,6 +284,18 @@ class WGAN_I_Generator(GAN_Generator):
 		self.loss = None
 		self.optimizer = optim.Adam(self.parameters(),lr=alpha,betas=betas)
 		self.did_init_train = True
+
+	def pre_train(self,discriminator):
+		if not self.did_init_train:
+			self.train_init()
+
+		self.zero_grad()
+		self.optimizer.zero_grad()
+		for p in discriminator.parameters():
+			p.requires_grad = False  # to avoid computation
+
+	def update_parameters(self):
+		self.optimizer.step()
 
 	def train_batch(self, batch_noise, discriminator):
 		"""
