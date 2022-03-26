@@ -86,6 +86,7 @@ class PixelShuffle2d(nn.Module):
 	def forward(self, input):
 		batch_size, channels, in_height, in_width = input.size()
 		channels /= self.scale_kernel[0]*self.scale_kernel[1]
+		channels = int(channels)
 
 		out_height = in_height * self.scale_kernel[0]
 		out_width = in_width * self.scale_kernel[1]
