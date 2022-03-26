@@ -4,6 +4,8 @@ import os
 import joblib
 import sys
 import pickle 
+
+from tqdm import tqdm
 sys.path.append("/home/hartmank/git/GAN_clean")
 
 
@@ -26,7 +28,7 @@ torch.backends.cudnn.enabled=True
 torch.backends.cudnn.benchmark=True
 
 n_critic = 5
-n_batch = 64
+n_batch = 2048 * 2
 input_length = 768
 jobid = 0
 
@@ -68,11 +70,11 @@ rng = np.random.RandomState(task_ind)
 # train = np.concatenate((train_set.X,test_set.X))
 # target = np.concatenate((train_set.y,test_set.y))
 
-datapath = './data/train1.pkl'
+datapath = './data/train-very-big-resampled.pkl'
 if not os.path.exists(datapath):
     from eeggan.dataset.dataset import EEGDataClass
 
-    dc = EEGDataClass('../../dataset/DataRawSet_256/DataRawSet_256/')
+    dc = EEGDataClass('../../dataset/data-very-big/')
 
     train = np.vstack([e[0] for e in dc.events])
     target = np.ones(train.shape[0]).astype(int)
@@ -81,10 +83,14 @@ if not os.path.exists(datapath):
 
 train, target = pickle.load(open(datapath, 'rb'))
 
-train = train[:,:,None]
+train = train[:,None,:,None].astype(np.float32)
+
 train = train-train.mean()
 train = train/train.std()
-train = train/np.abs(train).max()
+
+train_quantile = np.percentile(np.abs(train), 0.99)
+train[np.abs(train) > train_quantile] = train_quantile
+train = train/train_quantile
 
 target_onehot = np.zeros((target.shape[0],2))
 target_onehot[:, target] = 1
@@ -114,8 +120,8 @@ fade_alpha = 1.
 generator.model.alpha = fade_alpha
 discriminator.model.alpha = fade_alpha
 
-generator = generator.cpu()
-discriminator = discriminator.cpu()
+generator = generator.cuda()
+discriminator = discriminator.cuda()
 generator.train()
 discriminator.train()
 
@@ -125,12 +131,15 @@ i_epoch = 0
 z_vars_im = rng.normal(0,1,size=(1000,n_z)).astype(np.float32)
 
 for i_block in range(i_block_tmp,n_blocks):
+    print("-----------------")
     c = 0
 
-    train_tmp = discriminator.model.downsample_to_block(Variable(torch.from_numpy(train).cpu(),volatile=True),discriminator.model.cur_block).data.cpu()
+    train_tmp = discriminator.model.downsample_to_block(
+        Variable(torch.from_numpy(train).cuda(),volatile=True),
+        discriminator.model.cur_block
+    ).data.cpu()
 
-    for i_epoch in range(i_epoch_tmp,block_epochs[i_block]):
-
+    for i_epoch in tqdm(range(i_epoch_tmp,block_epochs[i_block])):
         i_epoch_tmp = 0
 
         if fade_alpha<1:
@@ -139,30 +148,35 @@ for i_block in range(i_block_tmp,n_blocks):
             discriminator.model.alpha = fade_alpha
 
         batches = get_balanced_batches(train.shape[0], rng, True, batch_size=n_batch)
-        iters = int(len(batches)/n_critic)
+        iters = max(int(len(batches)/n_critic), 1)
 
         for it in range(iters):
             for i_critic in range(n_critic):
-                train_batches = train_tmp[batches[it*n_critic+i_critic]]
-                batch_real = Variable(train_batches,requires_grad=True).cpu()
+                try:
+                    train_batches = train_tmp[batches[it*n_critic+i_critic]]
+                except IndexError:
+                    continue
+                batch_real = Variable(train_batches,requires_grad=True).cuda()
 
                 z_vars = rng.normal(0,1,size=(len(batches[it*n_critic+i_critic]),n_z)).astype(np.float32)
-                z_vars = Variable(torch.from_numpy(z_vars),volatile=True).cpu()
-                
-                output = generator(z_vars)
-                batch_fake = Variable(output.data,requires_grad=True).cpu()
+                z_vars = Variable(torch.from_numpy(z_vars),volatile=True).cuda()
 
-                loss_d = discriminator.train_batch(batch_real,batch_fake)
-                assert np.all(np.isfinite(loss_d))
+                output = generator(z_vars)
+                batch_fake = Variable(output.data,requires_grad=True).cuda()
+
+                loss_d = discriminator.train_batch(batch_real, batch_fake)
+                
+                # assert np.all(np.isfinite(loss_d))
+
             z_vars = rng.normal(0,1,size=(n_batch,n_z)).astype(np.float32)
-            z_vars = Variable(torch.from_numpy(z_vars),requires_grad=True).cpu()
+            z_vars = Variable(torch.from_numpy(z_vars),requires_grad=True).cuda()
             loss_g = generator.train_batch(z_vars,discriminator)
 
         losses_d.append(loss_d)
         losses_g.append(loss_g)
 
 
-        if i_epoch%100 == 0:
+        if i_epoch%50 == 0:
             generator.eval()
             discriminator.eval()
 
@@ -176,9 +190,9 @@ for i_block in range(i_block_tmp,n_blocks):
             train_fft = np.fft.rfft(train_tmp.numpy(),axis=2)
             train_amps = np.abs(train_fft).mean(axis=3).mean(axis=0).squeeze()
 
-
-            z_vars = Variable(torch.from_numpy(z_vars_im),volatile=True).cpu()
+            z_vars = Variable(torch.from_numpy(z_vars_im),volatile=True).cuda()
             batch_fake = generator(z_vars)
+
             fake_fft = np.fft.rfft(batch_fake.data.cpu().numpy(),axis=2)
             fake_amps = np.abs(fake_fft).mean(axis=3).mean(axis=0).squeeze()
 
@@ -205,31 +219,31 @@ for i_block in range(i_block_tmp,n_blocks):
             discriminator.save_model(os.path.join(modelpath,modelname%jobid+'.disc'))
             generator.save_model(os.path.join(modelpath,modelname%jobid+'.gen'))
 
-            plt.figure(figsize=(10,15))
-            plt.subplot(3,2,1)
-            plt.plot(np.asarray(losses_d)[:,0],label='Loss Real')
-            plt.plot(np.asarray(losses_d)[:,1],label='Loss Fake')
-            plt.title('Losses Discriminator')
-            plt.legend()
-            plt.subplot(3,2,2)
-            plt.plot(np.asarray(losses_d)[:,0]+np.asarray(losses_d)[:,1]+np.asarray(losses_d)[:,2],label='Loss')
-            plt.title('Loss Discriminator')
-            plt.legend()
-            plt.subplot(3,2,3)
-            plt.plot(np.asarray(losses_d)[:,2],label='Penalty Loss')
-            plt.title('Penalty')
-            plt.legend()
-            plt.subplot(3,2,4)
-            plt.plot(-np.asarray(losses_d)[:,0]-np.asarray(losses_d)[:,1],label='Wasserstein Distance')
-            plt.title('Wasserstein Distance')
-            plt.legend()
-            plt.subplot(3,2,5)
-            plt.plot(np.asarray(losses_g),label='Loss Generator')
-            plt.title('Loss Generator')
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig(os.path.join(modelpath,modelname%jobid+'_losses.png'))
-            plt.close()
+            # plt.figure(figsize=(10,15))
+            # plt.subplot(3,2,1)
+            # plt.plot(np.asarray(losses_d)[:,0],label='Loss Real')
+            # plt.plot(np.asarray(losses_d)[:,1],label='Loss Fake')
+            # plt.title('Losses Discriminator')
+            # plt.legend()
+            # plt.subplot(3,2,2)
+            # plt.plot(np.asarray(losses_d)[:,0]+np.asarray(losses_d)[:,1]+np.asarray(losses_d)[:,2],label='Loss')
+            # plt.title('Loss Discriminator')
+            # plt.legend()
+            # plt.subplot(3,2,3)
+            # plt.plot(np.asarray(losses_d)[:,2],label='Penalty Loss')
+            # plt.title('Penalty')
+            # plt.legend()
+            # plt.subplot(3,2,4)
+            # plt.plot(-np.asarray(losses_d)[:,0]-np.asarray(losses_d)[:,1],label='Wasserstein Distance')
+            # plt.title('Wasserstein Distance')
+            # plt.legend()
+            # plt.subplot(3,2,5)
+            # plt.plot(np.asarray(losses_g),label='Loss Generator')
+            # plt.title('Loss Generator')
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig(os.path.join(modelpath,modelname%jobid+'_losses.png'))
+            # plt.close()
 
             generator.train()
             discriminator.train()

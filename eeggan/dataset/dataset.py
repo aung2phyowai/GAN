@@ -2,7 +2,7 @@ import mne
 from  scipy.signal import butter, buttord 
 from  scipy.signal import iirnotch
 from  scipy.signal import filtfilt
-from scipy.signal import decimate
+from scipy.signal import resample
 import numpy as np
 from tqdm import tqdm
 
@@ -25,6 +25,9 @@ class EEGDataClass():
                     print(file)
 
     def get_events(self, fp):
+
+        # import pdb
+        # pdb.set_trace()
         raw = mne.io.read_raw_eeglab(fp,eog='auto')
         Fs=raw.info['sfreq']
         Fs_int = int(Fs)
@@ -41,26 +44,23 @@ class EEGDataClass():
         sf = filtfilt(b1,a1,sf)
         sf = filtfilt(nb,na,sf)
 
-        sf = decimate(sf, multiplier)
-        Fs_new = int(Fs // multiplier)
+        Fs_new = 768
         eventstarts = mne.events_from_annotations(
-            raw.copy().resample(Fs_new)
+            raw#.copy().resample(Fs_new)
         )[0]
-        eventstarts=eventstarts[:,0][eventstarts[:,2]==1]
+        eventstarts=eventstarts[:,0]
 
         ch_num = 1
 
-        events = np.zeros((ch_num,len(eventstarts),int(Fs)))
+        events = np.zeros((ch_num,len(eventstarts),int(Fs_new)))
         for i, ch in enumerate(sf[0:ch_num]):
             for j,st in enumerate(eventstarts):
                 event = ch[int(-0.2*Fs_int+st):int(0.8*Fs_int+st)]
                 init_mean = event[:int(0.2 * Fs_new)].mean()
+
+                event = resample(event, Fs_new)
+                assert event.shape[0] == Fs_new
+
                 events[i,j] = event - init_mean
-
+                
         self.events.append(events)
-
-    def __getitem__(self, idx):
-        return self.events[idx], True
-
-    def __len__(self):
-        return len(self.events)

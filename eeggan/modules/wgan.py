@@ -179,12 +179,12 @@ class WGAN_I_Discriminator(GAN_Module):
 		batch_real,one,mone = utils.cuda_check([batch_real,one,mone])
 
 		fx_real = self(batch_real)
-		loss_real = fx_real.mean()
+		loss_real = fx_real.mean().reshape(-1)
 		loss_real.backward(mone,
 						   retain_graph=(self.eps_drift>0 or self.eps_center>0))
 
 		fx_fake = self(batch_fake)
-		loss_fake = fx_fake.mean()
+		loss_fake = fx_fake.mean().reshape(-1)
 		loss_fake.backward(one,
 						   retain_graph=(self.eps_drift>0 or self.eps_center>0))
 
@@ -328,7 +328,7 @@ class WGAN_I_Generator(GAN_Module):
 		# Generate and discriminate
 		gen = self(batch_noise)
 		disc = discriminator(gen)
-		loss = disc.mean()
+		loss = disc.mean().reshape(-1)
 		# Backprop gradient
 		loss.backward(mone)
 

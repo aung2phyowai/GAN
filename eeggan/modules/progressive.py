@@ -36,6 +36,8 @@ class ProgressiveDiscriminator(nn.Module):
 	def forward(self,input):
 		fade = False
 		alpha = self.alpha
+		# Check everything, that is impor
+		
 		for i in range(self.cur_block,len(self.blocks)):
 			if alpha<1. and i==self.cur_block:
 				tmp = self.blocks[i].fade_sequence(input)
@@ -132,6 +134,8 @@ class ProgressiveDiscriminatorBlock(nn.Module):
 
 	def forward(self,input,first=False):
 		if first:
+			# import pdb 
+			# pdb.set_trace()
 			input = self.in_sequence(input)
 		out = self.intermediate_sequence(input)
 		return out
