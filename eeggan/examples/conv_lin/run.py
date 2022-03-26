@@ -68,7 +68,7 @@ rng = np.random.RandomState(task_ind)
 # train = np.concatenate((train_set.X,test_set.X))
 # target = np.concatenate((train_set.y,test_set.y))
 
-datapath = './data/train.pkl'
+datapath = './data/train1.pkl'
 if not os.path.exists(datapath):
     from eeggan.dataset.dataset import EEGDataClass
 
@@ -79,7 +79,7 @@ if not os.path.exists(datapath):
     data_tuple = (train, target)
     pickle.dump(data_tuple, open(datapath, 'wb'))
 
-data_tuple = pickle.load(open(datapath, 'rb'))
+train, target = pickle.load(open(datapath, 'rb'))
 
 train = train[:,:,None]
 train = train-train.mean()
