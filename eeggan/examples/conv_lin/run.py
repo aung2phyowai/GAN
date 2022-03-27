@@ -36,7 +36,7 @@ n_z = 200
 lr = 0.001
 n_blocks = 6
 rampup = 2000.
-block_epochs = [2000,4000,4000,4000,4000,4000]
+block_epochs = [500,1000,1000,1000,4000,4000]
 
 subj_ind = int(os.getenv('SLURM_ARRAY_TASK_ID','0'))
 task_ind = 0#subj_ind
@@ -88,7 +88,7 @@ train = train[:,None,:,None].astype(np.float32)
 train = train-train.mean()
 train = train/train.std()
 
-train_quantile = np.percentile(np.abs(train), 0.99)
+train_quantile = np.percentile(np.abs(train), 99)
 train[np.abs(train) > train_quantile] = np.sign(train[np.abs(train) > train_quantile]) * train_quantile
 train = train/train_quantile
 
