@@ -89,7 +89,7 @@ train = train-train.mean()
 train = train/train.std()
 
 train_quantile = np.percentile(np.abs(train), 0.99)
-train[np.abs(train) > train_quantile] = train_quantile
+train[np.abs(train) > train_quantile] = np.sign(train[np.abs(train) > train_quantile]) * train_quantile
 train = train/train_quantile
 
 target_onehot = np.zeros((target.shape[0],2))
@@ -176,7 +176,7 @@ for i_block in range(i_block_tmp,n_blocks):
         losses_g.append(loss_g)
 
 
-        if i_epoch%50 == 0:
+        if i_epoch%10 == 0:
             generator.eval()
             discriminator.eval()
 

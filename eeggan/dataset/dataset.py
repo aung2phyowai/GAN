@@ -46,7 +46,7 @@ class EEGDataClass():
 
         Fs_new = 768
         eventstarts = mne.events_from_annotations(
-            raw#.copy().resample(Fs_new)
+            raw.copy().resample(Fs_new)
         )[0]
         eventstarts=eventstarts[:,0]
 
