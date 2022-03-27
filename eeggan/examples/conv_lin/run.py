@@ -32,11 +32,13 @@ n_batch = 2048 * 2
 input_length = 768
 jobid = 0
 
-n_z = 200
-lr = 0.001
+# n_z = 200
+n_z = 16
+lr = 0.01
 n_blocks = 6
 rampup = 2000.
-block_epochs = [500,1000,1000,1000,4000,4000]
+# block_epochs = [500,1000,1000,1000,4000,4000]
+block_epochs = [500,300,300,500,500,500]
 
 subj_ind = int(os.getenv('SLURM_ARRAY_TASK_ID','0'))
 task_ind = 0#subj_ind
@@ -247,8 +249,12 @@ for i_block in range(i_block_tmp,n_blocks):
 
             generator.train()
             discriminator.train()
+        lr /= 1.05
+        lr = max(lr, 0.001)
 
 
     fade_alpha = 0.
     generator.model.cur_block += 1
     discriminator.model.cur_block -= 1
+    lr = 0.01
+    n_batch //= 2
