@@ -119,7 +119,12 @@ class WGAN_I_Discriminator(GAN_Module):
 		EEG-GAN: Generative adversarial networks for electroencephalograhic
 		(EEG) brain signals. Retrieved from https://arxiv.org/abs/1806.01875
 		"""
-		super(WGAN_I_Discriminator,self).train_init(alpha,betas)
+		# super(WGAN_I_Discriminator,self).train_init(alpha,betas)
+
+		self.optimizer = optim.Adam(self.parameters(),lr=alpha,betas=betas)
+		self.loss = torch.nn.BCELoss()
+		self.did_init_train = True
+
 		self.loss = None
 		self.lambd = lambd
 		self.one_sided_penalty = one_sided_penalty
@@ -174,12 +179,12 @@ class WGAN_I_Discriminator(GAN_Module):
 		batch_real,one,mone = utils.cuda_check([batch_real,one,mone])
 
 		fx_real = self(batch_real)
-		loss_real = fx_real.mean()
+		loss_real = fx_real.mean().reshape(-1)
 		loss_real.backward(mone,
 						   retain_graph=(self.eps_drift>0 or self.eps_center>0))
 
 		fx_fake = self(batch_fake)
-		loss_fake = fx_fake.mean()
+		loss_fake = fx_fake.mean().reshape(-1)
 		loss_fake.backward(one,
 						   retain_graph=(self.eps_drift>0 or self.eps_center>0))
 
@@ -314,6 +319,7 @@ class WGAN_I_Generator(GAN_Module):
 			WGAN loss against evaluation of discriminator of generated samples
 			to be real
 		"""
+
 		self.pre_train(discriminator)
 
 		mone = torch.FloatTensor([1]) * -1
@@ -322,7 +328,7 @@ class WGAN_I_Generator(GAN_Module):
 		# Generate and discriminate
 		gen = self(batch_noise)
 		disc = discriminator(gen)
-		loss = disc.mean()
+		loss = disc.mean().reshape(-1)
 		# Backprop gradient
 		loss.backward(mone)
 

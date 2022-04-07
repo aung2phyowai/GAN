@@ -7,16 +7,16 @@ import numpy as np
 import math
 import random
 import matplotlib.pyplot as plt
-from eeggan.torch_utils.ops import bias_act
+
 
 class FullyConnectedLayer(torch.nn.Module):
     def __init__(self,
-        in_features,                # Number of input features.
-        out_features,               # Number of output features.
-        bias            = True,     # Apply additive bias before the activation function?
-        activation      = 'linear', # Activation function: 'relu', 'lrelu', etc.
-        lr_multiplier   = 1,        # Learning rate multiplier.
-        bias_init       = 0,        # Initial value for the additive bias.
+                 in_features,
+                 out_features,
+                 bias = True,
+                 activation      = 'linear',
+                 lr_multiplier   = 1,
+                 bias_init       = 0,
     ):
         super().__init__()
         self.in_features = in_features
@@ -39,7 +39,7 @@ class FullyConnectedLayer(torch.nn.Module):
             x = torch.addmm(b.unsqueeze(0), x, w.t())
         else:
             x = x.matmul(w.t())
-            x = bias_act.bias_act(x, b, act=self.activation)
+            x = nn.functional.relu(x) + b
         return x
 
     def extra_repr(self):
@@ -47,21 +47,20 @@ class FullyConnectedLayer(torch.nn.Module):
 
 class MappingNetwork(torch.nn.Module):
     def __init__(self,
-        z_dim, # Input latent (Z) dimensionality, 0 = no latent.w_dim,                      # Intermediate latent (W) dimensionality.
-	    w_dim,  # Intermediate latent (W) dimensionality.
-        num_layers = 8,   # Number of mapping layers.
-        intermediete_layer_features = None, # List of intermediete layers dimensionality, if = None equal to w_dim
-        activation = 'lrelu', # Activation function: 'relu', 'lrelu', etc.
-        lr_multiplier = 0.01,  # Learning rate multiplier for the mapping layers.
-        w_avg_beta = 0.998,  # Decay for tracking the moving average of W during training, None = do not track.
-    ):
+                 z_dim,
+                 w_dim,
+                 num_layers = 8,
+                 intermediete_layer_features = None,
+                 activation = 'lrelu',
+                 lr_multiplier = 0.01,
+                 w_avg_beta = 0.998,
+                 ):
         super().__init__()
         self.z_dim = z_dim
         self.w_dim = w_dim
         self.num_layers = num_layers
         self.w_avg_beta = w_avg_beta
-
-        if intermediete_layer_features == None: # If not specified, use w_dim
+        if intermediete_layer_features == None:
             intermediete_layer_features = [w_dim] * (num_layers - 1) # List of intermediete layers dimensionality, if = None equal to w_dim
         assert(len(intermediete_layer_features) == num_layers - 1) # Check that the number of layers is correct
 
@@ -102,6 +101,4 @@ class MappingNetwork(torch.nn.Module):
     def extra_repr(self): # For printing the model.
         return f'z_dim={self.z_dim:d}, w_dim={self.w_dim:d}' # For printing the model.
 
-a = torch.randn([100, 100])
-map = MappingNetwork(100, 100, num_layers=3)
-z = map(a)
+

@@ -14,6 +14,8 @@ from eeggan.modules.progressive import ProgressiveGenerator,ProgressiveGenerator
 							ProgressiveDiscriminator,ProgressiveDiscriminatorBlock
 from eeggan.modules.wgan import WGAN_I_Generator,WGAN_I_Discriminator
 from torch.nn.init import calculate_gain
+from eeggan.modules.layers.mapping_network import MappingNetwork
+
 
 
 def create_disc_blocks(n_chans):
@@ -139,17 +141,18 @@ def create_gen_blocks(n_chans,z_vars):
 	blocks.append(tmp_block)
 	return blocks
 
-
 class Generator(WGAN_I_Generator):
-	def __init__(self,n_chans,z_vars):
+	def __init__(self, n_chans, z_vars, num_map_layers = 2):
 		super(Generator,self).__init__()
-		self.model = ProgressiveGenerator(create_gen_blocks(n_chans,z_vars))
+		self.model = ProgressiveGenerator(create_gen_blocks(n_chans, z_vars))
+		self.mapping = MappingNetwork(z_vars, z_vars, num_map_layers)
 
-	def forward(self,input):
-		return self.model(input)
+	def forward(self,input, truncation_psi = 1):
+		out = self.mapping(input, truncation_psi)
+		return self.model(out)
 
 class Discriminator(WGAN_I_Discriminator):
-	def __init__(self,n_chans):
+	def __init__(self, n_chans):
 		super(Discriminator,self).__init__()
 		self.model = ProgressiveDiscriminator(create_disc_blocks(n_chans))
 
