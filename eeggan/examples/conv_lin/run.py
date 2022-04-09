@@ -1,15 +1,13 @@
 # %load_ext autoreload
 # %autoreload 2
+import config
+
 import os
 import joblib
 import sys
 import pickle
 
 from tqdm import tqdm
-
-sys.path.append(r"C:\Users\hplis\OneDrive\Documents\BrainHackModels")
-
-sys.path.append('../../../')
 
 from braindecode.datautil.iterators import get_balanced_batches
 from eeggan.examples.conv_lin.augmented_model import Generator, Discriminator
@@ -23,21 +21,18 @@ import matplotlib
 import random
 import wandb
 
-os.environ["CUDA_PATH"] = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.3"
-
 matplotlib.use('TKAgg')
-# fix matplotlib libiomp5mp.dll error
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 torch.backends.cudnn.enabled = True
 torch.backends.cudnn.benchmark = True
 
+jobid = 0
+input_length = 768
+
 n_critic = 1
 n_batch = 2648 * 8
-input_length = 768
-jobid = 0
-
 n_z = 16
 lr = 0.05
 n_blocks = 6
@@ -47,7 +42,21 @@ block_epochs = [150, 100, 200, 200, 400, 800]
 # block_epochs = [1,1,1,1,1,1]
 subj_ind = int(os.getenv('SLURM_ARRAY_TASK_ID', '0'))
 task_ind = 0  # subj_ind
+
+# Params used in GAN before mapping network extension
 # subj_ind = 9
+# n_critic = 5
+# n_batch = 2048 * 2
+# n_z = 16
+# lr = 0.01
+# n_blocks = 6
+# rampup = 2000.
+# # block_epochs = [500,1000,1000,1000,4000,4000]
+# block_epochs = [500,300,300,500,500,500]
+# subj_ind = int(os.getenv('SLURM_ARRAY_TASK_ID','0'))
+# task_ind = 0#subj_ind
+# #subj_ind = 9
+
 subj_names = ['BhNoMoSc1',
               'FaMaMoSc1',
               'FrThMoSc1',
@@ -69,12 +78,11 @@ torch.cuda.manual_seed_all(task_ind)
 random.seed(task_ind)
 rng = np.random.RandomState(task_ind)
 
-
-datapath = r'C:\Users\hplis\OneDrive\Documents\GitHub\train-768.pkl'
+datapath = config.compiled_data_path
 if not os.path.exists(datapath):
     from eeggan.dataset.dataset import EEGDataClass
 
-    dc = EEGDataClass(r'C:\Users\hplis\Downloads\eeg_files')
+    dc = EEGDataClass(config.dataset_path)
 
     train = np.vstack([e[0] for e in dc.events])
     target = np.ones(train.shape[0]).astype(int)
@@ -95,9 +103,8 @@ train = train/(train_quantile + 1e-8)
 target_onehot = np.zeros((target.shape[0], 2))
 target_onehot[:, target] = 1
 
-modelpath = './test.cnt'
+modelpath = config.model_path
 
-# modelpath = '/model/model.f'
 modelname = 'Progressive%s'
 if not os.path.exists(modelpath):
     os.makedirs(modelpath)
@@ -192,6 +199,7 @@ for i_block in range(i_block_tmp, n_blocks):
         #             "Generator Loss": loss_g
         #         }
         #     )
+
         if i_epoch % 10 == 0:
             generator.eval()
             discriminator.eval()
@@ -267,13 +275,14 @@ for i_block in range(i_block_tmp, n_blocks):
 
             generator.train()
             discriminator.train()
-        lr/=1.05
-        lr = max(lr,0.001)
+        lr /= 1.05
+        lr = max(lr, 0.001)
 
     fade_alpha = 0.
     generator.model.cur_block += 1
     discriminator.model.cur_block -= 1
     lr = 0.01
+
     n_critic+=1
     if i_block in [0,1,2]:
         n_batch //= 3

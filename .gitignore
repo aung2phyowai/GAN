@@ -100,3 +100,5 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+./examples/conv_lin/config.py
