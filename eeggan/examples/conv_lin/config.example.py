@@ -1,6 +1,7 @@
 import sys
 import os
 
+n_batch = 2648 * 8
 os.environ["CUDA_PATH"] = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.3"
 
 sys.path.append(r"C:\Users\hplis\OneDrive\Documents\BrainHackModels")

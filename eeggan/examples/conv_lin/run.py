@@ -32,7 +32,7 @@ jobid = 0
 input_length = 768
 
 n_critic = 1
-n_batch = 2648 * 8
+n_batch = config.n_batch
 n_z = 16
 lr = 0.05
 n_blocks = 6
